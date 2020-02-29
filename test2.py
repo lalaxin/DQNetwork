@@ -38,7 +38,7 @@ celllength=3
 regionnum=cell*cell #区域个数
 pricek=2
 
-# 定义区域
+# 定义区域(随机车辆数，中心点横坐标，中心点纵坐标)
 region=[]
 for i in range(regionnum):
     region[i]=[random.randint(1,2),(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
@@ -208,14 +208,14 @@ for i_episode in range(400):
 
         #     更新s_
             s_[user[i][0]]=-1
-            s_[user[i][1]]=+1
+            s_[user[i][2]]=+1
             # 先计算给用户步行激励的钱
-            userprice=pricek*(region[user[i][1]][1])
+            userprice=pricek*(math.pow(region[user[i][1]][1]-region[user[i][2]][1],2)+math.pow(region[user[i][1]][2]-region[user[i][2]][2],2))
+            s_[regionnum]-=userprice      #更新预算约束，若RB<=此用户的激励预算，则本轮学习结束
+            if(s_[regionnum]<0):
+                done=True   #若RB<0，预算算完，则本轮学习结束
 
-            s_[regionnum]=      #更新预算约束，若RB<=此用户的激励预算，则本轮学习结束
-
-            if():
-                done=True   #若RB<=此用户的激励预算，则本轮学习结束
+        # 计算reword
 
 
 
