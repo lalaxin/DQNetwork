@@ -14,6 +14,7 @@ import torch.nn.functional as F
 import numpy as np
 import random
 import math
+import copy
 # import gym
 
 random.seed(1)
@@ -32,42 +33,47 @@ T=5  #时间时段
 walknum=10 #步行的距离分为10个步行长度来采取动作
 RB=20  #预算约束
 # 横向网格数
-cell=2
+xcell=2
+# 纵向网格数
+ycell=2
 # 单个网格长度
 celllength=3
-regionnum=cell*cell #区域个数
+regionnum=xcell*ycell #区域个数
 pricek=2
+usernum=10 #用户数为10
 
 # 定义区域(随机车辆数，中心点横坐标，中心点纵坐标)
 region=[]
 for i in range(regionnum):
-    region[i]=[random.randint(1,2),(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
+    region[i]=[(i%xcell)*celllength+celllength/2,(int(i/xcell))*celllength+celllength/2]
+
+# 用户需求,每个时间段用户需求随机到来（随机初始化用户数量）以及用户的起始区域，目的地，用户实际到达的区域以及我们希望用户到达的区域
+def init_user_demand():
+    userdemand=[]
+    for t in range (T):
+        for i in range (usernum):
+            userdemand[t][i]=[random.randint(0,regionnum-1),random.randint(0,regionnum-1),0,0]
+    return userdemand
 
 # 初始化状态
 def init_state():
     # 状态最后一项是剩余预算，后面是每个区域的（车数）,区域从1开始计数
+    s=[]
     for i in range (regionnum+1):
         s[i]=random.randint(0,10) #第i个区域的车的供应量
     s[regionnum]=RB
             # s[2*i]=random.randint(0,10)  #第i个区域的用户需求数
     return s
 
-
-# 载入gym环境
-# env = gym.make('CartPole-v0')
-# env = env.unwrapped
-
 # 输入状态值，输出所有的动作值（根据强化学习的方法选取动作）
 # 更新神经网络参数
 
-
 # 神经网络输出的action的个数（对于每一个用户而言，有多少个用户输出多少个action） 输出的action包含所有的用户的动作，是一个集合，（动作就是用户到达的区域）
-N_ACTIONS = regionnum*walknum
+N_ACTIONS = usernum*9
 # 接收的observation数（剩余预算，每个区域内车的数量）
-N_STATES = 2
+N_STATES = 1
 
 # ENV_A_SHAPE = 0 if isinstance(env.action_space.sample(), int) else env.action_space.sample().shape     # to confirm the shape
-
 
 class Net(nn.Module):
     # 定义卷积层
@@ -92,7 +98,6 @@ class Net(nn.Module):
         # 经过第二层后输出action
         actions_value = self.out(x)
         return actions_value
-
 
 class DQN(object):
     def __init__(self):
@@ -170,75 +175,107 @@ class DQN(object):
         # 更新参数
         self.optimizer.step()
 
-dqn = DQN()
 
-print('\nCollecting experience...')
+def run_this():
+    dqn = DQN()
+    print('\nCollecting experience...')
+    # run this
+    for i_episode in range(400):
+        # 初始化环境
+        s = init_state()
+        s_=[]
+        ep_r = 0
+        user = init_user_demand()
+        for t in range (T):
+            # 计算reward（由于下一时刻用户需求到来之后才能计算d，所以先将状态，动作对存起来）
+            # 计算reward时也涉及到用户的匹配问题，用户匹配附近的哪个还车区域会使得整个用户的d最小
+            r=0
+            if (t == 0):
+                r = 0
+            else:
+                s_1=copy.deepcopy(s_)
+                for i in range (usernum):
+                    if(s_1[user[t][i][0]]!=0):
+                        s_1[user[t][i][0]]-=1
+                        r+=0   #如果用户在本区域有车，则将其reward设为0
+                    else:
+                        temp=[user[t][i][0]-xcell-1,user[t][i][0]-xcell,user[t][i][0]-xcell+1,user[t][i][0]-1,user[t][i][0]+1,user[t][i][0]+xcell-1,user[t][i][0]+xcell,user[t][i][0]+xcell+1]
+                        # temp=[1,2,3,4,5,6,7,8]
+                        # 将该区域的临近区域表示出来，注意边界区域
+                        if(user[t][i][0]//celllength==0):
+                            temp.remove(user[t][i][0]-xcell-1)
+                            temp.remove(user[t][i][0]-xcell)
+                            temp.remove(user[t][i][0]-xcell+1)
+                        if(user[t][i][1]%celllength==0):
+                            temp.remove(user[t][i][0]-1)
+                            temp.remove(user[t][i][0]+xcell-1)
+                            if (user[t][i][0]-xcell-1) in temp:
+                                temp.remove(user[t][i][0]-xcell-1)
+                        if(user[t][i][0]%celllength==xcell-1):
+                            temp.remove(user[t][i][0]+1)
+                            temp.remove(user[t][i][0]+xcell+1)
+                            if 3 in temp:
+                                temp.remove(user[t][i][0]-xcell+1)
+                        if (user[t][i][1] % celllength == ycell - 1):
+                            temp.remove(user[t][i][0]+xcell)
+                            if 6 in temp:
+                                temp.remove(user[t][i][0]+xcell-1)
+                            if 8 in temp:
+                                temp.remove(user[t][i][0]+xcell+1)
+                        # 从temp中有车的区域随机取一个取车,并将其reward设为-d
+                        for i in range (len(temp)):
+                            temp_=temp[random.randint(0,len(temp)-1)]
+                            if (s_1[temp_]!=0):
+                                if(abs(temp_-user[t][i][0])==2):
+                                    r+=-math.sqrt(2*celllength*celllength)
+                                s_1[temp_]-=1
+                                break
+                            else:
+                                temp.remove(temp_)
+                        # 若该区域所有的临近区域都无车，则给一个很大的惩罚
+                        if not temp:
+                            r += -1e10
+            # 存储记忆
+            if(t!=0 and t!=T-1):
+                dqn.store_transition(s,a,r,s_)
+                # 第二轮进行状态转移
+                s=copy.deepcopy(s_)
 
-# run this
-for i_episode in range(400):
-    # 初始化环境
-    s = init_state()
-    s_=[]
-    ep_r = 0
-    for t in range  (T):
-        # 每个时间段用户需求随机到来（随机初始化用户数量）以及用户得起点，目的地，用户实际到达的区域以及我们希望用户到达的区域
-        user=[]
-        usernum=random.randint(0,10)
-        for i in range (usernum):
-            user[i]=[random.randint(0,regionnum-1),random.randint(0,regionnum-1),0,0]
+            # 动作的维度是用户数，输出的a是每一个用户采取的哪一个动作
+            # 首先根据当前observation选取一个动作
+            a = dqn.choose_action(s)
 
+            # take action 与环境交互，施加改动作在环境中，得到下一个observation_,以及reward，done表示是否终结
+            # 根据当前动作和状态来得到下一状态以及reword
+            for i in range(len(a)):
+                # 期望用户到达的区域
+                user[t][i][3]=a[i]//walknum  #取整，判断选取动作属于哪一个区域
+                # (x,y)为用户到达的位置
+                x=region[user[t][i][3]][1]-(region[user[t][i][3]][1]-region[user[t][i][0]][1])*a[i]%walknum/walknum
+                y=region[user[t][i][3]][2]-(region[user[t][i][3]][2]-region[user[t][i][0]][2])*a[i]%walknum/walknum
+                # 用户实际到达的区域
+                user[t][i][2]=(y//celllength)*xcell+(x//celllength)
 
-        # 刷新当前环境并显示
-        # env.render()
+            #     更新s_
+                s_[user[t][i][0]]=-1
+                s_[user[t][i][2]]=+1
+                # 先计算给用户步行激励的钱
+                userprice=pricek*(math.pow(region[user[t][i][1]][1]-region[user[t][i][2]][1],2)+math.pow(region[user[t][i][1]][2]-region[user[t][i][2]][2],2))
+                s_[regionnum]-=userprice      #更新预算约束，若RB<=此用户的激励预算，则本轮学习结束
+                if(s_[regionnum]<0):
+                    done=True   #若RB<0，预算算完，则本轮学习结束
 
-        # 动作的维度是用户数，输出的a是每一个用户采取的哪一个动作
-        # 首先根据当前observation选取一个动作
-        a = dqn.choose_action(s)
+            ep_r += r
 
-        # take action 与环境交互，施加改动作在环境中，得到下一个observation_,以及reward，done表示是否终结
-        # 根据当前动作和状态来得到下一状态以及reword
-        for i in range(len(a)):
-            # 期望用户到达的区域
-            user[i][3]=a[i]//walknum  #取整，判断选取动作属于哪一个区域
-            # (x,y)为用户到达的位置
-            x=region[user[i][3]][1]-(region[user[i][3]][1]-region[user[i][0]][1])*a[i]%walknum/walknum
-            y=region[user[i][3]][2]-(region[user[i][3]][2]-region[user[i][0]][2])*a[i]%walknum/walknum
-            # 用户实际到达的区域
-            user[i][2]=(y//celllength)*cell+(x//celllength)
+            # s首先需要存储记忆，记忆库中有一些东西之后才能学习（前200步都是在存储记忆,大于200之后每5步学习一次）
+            if dqn.memory_counter > MEMORY_CAPACITY:
+                dqn.learn()
+                if done:
+                    print('Ep: ', i_episode, '| Ep_r: ', round(ep_r, 2))
 
-        #     更新s_
-            s_[user[i][0]]=-1
-            s_[user[i][2]]=+1
-            # 先计算给用户步行激励的钱
-            userprice=pricek*(math.pow(region[user[i][1]][1]-region[user[i][2]][1],2)+math.pow(region[user[i][1]][2]-region[user[i][2]][2],2))
-            s_[regionnum]-=userprice      #更新预算约束，若RB<=此用户的激励预算，则本轮学习结束
-            if(s_[regionnum]<0):
-                done=True   #若RB<0，预算算完，则本轮学习结束
-
-        # 计算reword
-
-
-
-
-
-        s_, r, done, info = env.step(a)
-
-        # modify the reward 修改奖励
-        x, x_dot, theta, theta_dot = s_
-        r1 = (env.x_threshold - abs(x)) / env.x_threshold - 0.8
-        r2 = (env.theta_threshold_radians - abs(theta)) / env.theta_threshold_radians - 0.5
-        r = r1 + r2
-
-        # 存储记忆
-        dqn.store_transition(s, a, r, s_)
-
-        ep_r += r
-        if dqn.memory_counter > MEMORY_CAPACITY:
-            dqn.learn()
             if done:
-                print('Ep: ', i_episode,
-                      '| Ep_r: ', round(ep_r, 2))
+                break
+            # s = s_
 
-        if done:
-            break
-        s = s_
+
+run_this()

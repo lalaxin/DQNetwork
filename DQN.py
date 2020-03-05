@@ -25,7 +25,7 @@ env = gym.make('CartPole-v0')
 env = env.unwrapped
 N_ACTIONS = env.action_space.n
 N_STATES = env.observation_space.shape[0]
-print(7//2,7%2)
+
 print("状态空间",env.observation_space)
 ENV_A_SHAPE = 0 if isinstance(env.action_space.sample(), int) else env.action_space.sample().shape     # to confirm the shape
 
