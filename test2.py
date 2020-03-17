@@ -16,6 +16,7 @@ import random
 import math
 import copy
 # import gym
+from torch.autograd import Variable
 
 random.seed(1)
 
@@ -43,13 +44,17 @@ pricek=2
 usernum=10 #用户数为10
 
 # 定义区域(随机车辆数，中心点横坐标，中心点纵坐标)
-region=[]
+region = list()
 for i in range(regionnum):
-    region[i]=[(i%xcell)*celllength+celllength/2,(int(i/xcell))*celllength+celllength/2]
+    # print(i)
+    r =[(i%xcell)*celllength+celllength/2,(int(i/xcell))*celllength+celllength/2]
+    # print(r)
+    region.append(r)
+    # print(region)
 
 # 用户需求,每个时间段用户需求随机到来（随机初始化用户数量）以及用户的起始区域，目的地，用户实际到达的区域以及我们希望用户到达的区域
 def init_user_demand():
-    userdemand=[]
+    userdemand=[[[0]for i in range (usernum)] for t in range (T)]
     for t in range (T):
         for i in range (usernum):
             userdemand[t][i]=[random.randint(0,regionnum-1),random.randint(0,regionnum-1),0,0]
@@ -58,7 +63,7 @@ def init_user_demand():
 # 初始化状态
 def init_state():
     # 状态最后一项是剩余预算，后面是每个区域的（车数）,区域从1开始计数
-    s=[]
+    s=[[0] for i in range (regionnum+1)]
     for i in range (regionnum+1):
         s[i]=random.randint(0,10) #第i个区域的车的供应量
     s[regionnum]=RB
@@ -70,8 +75,8 @@ def init_state():
 
 # 神经网络输出的action的个数（对于每一个用户而言，有多少个用户输出多少个action） 输出的action包含所有的用户的动作，是一个集合，（动作就是用户到达的区域）
 N_ACTIONS = usernum*9
-# 接收的observation数（剩余预算，每个区域内车的数量）
-N_STATES = 1
+# 接收的observation维度
+N_STATES = regionnum+1
 
 # ENV_A_SHAPE = 0 if isinstance(env.action_space.sample(), int) else env.action_space.sample().shape     # to confirm the shape
 
@@ -236,12 +241,12 @@ def run_this():
                         if not temp:
                             r += -1e10
             # 存储记忆
-            if(t!=0 and t!=T-1):
+            if(t!=0):
                 dqn.store_transition(s,a,r,s_)
                 # 第二轮进行状态转移
                 s=copy.deepcopy(s_)
 
-            # 动作的维度是用户数，输出的a是每一个用户采取的哪一个动作
+            # dqn.choose_action()一下只能输出一个动作，动作的维度是用户数，输出的a是每一个用户采取的哪一个动作
             # 首先根据当前observation选取一个动作
             a = dqn.choose_action(s)
 

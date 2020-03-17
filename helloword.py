@@ -20,7 +20,7 @@ Region=[[0, 2, 6, 1.0, 1.0], [0, 1, 10, 3.0, 1.0], [0, 1, 3, 1.0, 3.0], [0, 2, 9
 initRegion=copy.deepcopy(Region)
 
 # 用户数量
-usernum=5
+usernum=1
 # 定义用户数组（起点横坐标，起点纵坐标，终点横坐标，终点纵坐标，最大步行距离,期望停车区域横坐标，期望停车区域纵坐标）
 User=[[0 for i in range(3)]for i in range(usernum)]
 for i in range(usernum):
@@ -45,7 +45,7 @@ def regionlackbike(region,user):
         if(user[i][0]==cell*celllength):
             a=int(user[i][1]/celllength)*cell+int(user[i][0]/celllength)-1
         elif(user[i][1]==cell*celllength):
-            int(user[i][1] / celllength) * cell + int(user[i][0] / celllength)-cell
+            a=int(user[i][1] / celllength) * cell + int(user[i][0] / celllength)-cell
         elif(user[i][0]==cell*celllength & user[i][1]==cell*celllength):
             a=cellnum-1
         else:

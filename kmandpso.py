@@ -72,7 +72,7 @@ class PSO():
         self.pB=pB   #用户骑行的单价（按米计算）
         self.k=k   #用户步行的成本单价
         self.pi=np.zeros(self.dim)
-        self.B=1  #预算采用用了就减的模式？
+        self.B=0.9  #预算采用用了就减的模式？
 
     #X的输入表示的是一个粒子的多维数据（每一维对应一个用户数据,相当于一个大的user）（用户数多余缺车数则按缺车匹配，匹配成功给用户赋相应的值）X只表示当前粒子的位置，不能表示整个user
     def kmd(self,kmX):
@@ -111,7 +111,7 @@ class PSO():
             self.User=self.kmd(X)
         if(self.flag==1):
             self.User=self.greedyd(X)
-        print("self_User",self.User)
+        # print("self_User",self.User)
         # 匹配成功后再计算适应值
         #larrlact有一个限制，即用户行走的最大距离（步行限制）
         for i in range (self.dim):
@@ -121,13 +121,16 @@ class PSO():
                 lslact = math.sqrt(math.pow((self.User[i][0] - X[i][0]), 2) + math.pow((self.User[i][1] - X[i][1]), 2))  #起点到实际位置
                 larrlact = math.sqrt(math.pow((X[i][0] - self.initUser[i][2]), 2) + math.pow((X[i][1] - self.initUser[i][3]), 2))
                 self.pi[i]=self.pB*(lslact-lslarr)+self.k*(larrlact)*(larrlact)
+                if(self.pi[i]<0):
+                    self.pi[i]=0
         #计算每一维的d再求其平方和，若越界则给其给其惩罚
 
         print("sum_pi",sum(self.pi))
 
         #计算距离时（适应值）所有的点都求（根据用户来算）
-        if(sum(self.pi)<=self.B):
+        if(sum(self.pi)<=self.B ):
             for i in range (self.dim):
+
                 if (self.User[i][5] != -1 and self.User[i][6] != -1):
                     self.D[i]=math.pow((X[i][0]-self.User[i][5]),2)+math.pow((X[i][1]-self.User[i][6]),2)
                     # self.D[i]=math.sqrt(math.pow((X[i][0]-self.User[i][5]),2)+math.pow((X[i][1]-self.User[i][6]),2))
@@ -218,61 +221,109 @@ class PSO():
             # print("p_fit",t,self.p_fit)
             # print("gbest",self.gbest)
             for i in range (self.pN):   #更新每个粒子的位置（多维数据时更新多维的位置）
-                temp = self.function(self.X[k])  # 第k个粒子
-                print("temp", k, temp)
-                if temp < self.p_fit[k]:  # 更新个体最优
-                    self.p_fit[k] = temp
-                    self.pbest[k] = self.X[k]
-                    if self.p_fit[k] < self.fit:
-                        self.gbest = self.X[k]
+                temp = self.function(self.X[i])  # 第k个粒子
+                # print("temp", i, temp)
+                if temp < self.p_fit[i]:  # 更新个体最优
+                    self.p_fit[i] = temp
+                    self.pbest[i] = self.X[i]
+                    if self.p_fit[i] < self.fit:
+                        self.gbest = self.X[i]
                         # for m in range (usernum):
                         #     print("第k个粒子",k,"(",self.User[m][5],self.User[m][6],")")
                         # print(self.initUser[k][1])
-                        self.fit = self.p_fit[k]
+                        self.fit = self.p_fit[i]
 
-                # 若超过预算限制，则temp=1e10，此时粒子不知如何处理
-                if(temp==1e10):
-                    a
-                else:
-                    for j in range (self.dim):
-                        #更新速度，满足约束条件，若越界则将其设为边界值（圆形边界值如何设置？）淘汰越界的点（某一维，根据该以为的数据来更新）
-                        self.V[i][j][0]=self.w*self.V[i][j][0]+self.c1*self.r1*(self.pbest[i][j][0]-self.X[i][j][0])+self.c2*self.r2*(self.gbest[j][0]-self.X[i][j][0])
-                        self.V[i][j][1] = self.w * self.V[i][j][1] + self.c1 * self.r1 * (self.pbest[i][j][1] - self.X[i][j][1]) + self.c2 * self.r2 * (self.gbest[j][1] - self.X[i][j][1])
-                        if(self.V[i][j][0]>self.maxV[j]):
-                            self.V[i][j][0]=self.maxV[j]
-                        if (self.V[i][j][1] > self.maxV[j]):
-                            self.V[i][j][1] = self.maxV[j]
-                        elif(self.V[i][j][0]<-self.maxV[j]):
-                            self.V[i][j][0] = -self.maxV[j]
-                        elif (self.V[i][j][1] < -self.maxV[j]):
-                            self.V[i][j][1] = -self.maxV[j]
-                            # self.V[i][j][1] = -self.maxV[j]
+                # 若超过预算限制，则temp=1e10，此时粒子反向
+                # if(temp==1e10):
+                #     for j in range(self.dim):
+                #         # 更新速度，满足约束条件，若越界则将其设为边界值（圆形边界值如何设置？）淘汰越界的点（某一维，根据该以为的数据来更新）
+                #         if(self.X[i][j][0]<self.initUser[j][2]):
+                #             self.V[i][j][0]=abs(self.V[i][j][0])
+                #         if (self.X[i][j][1] < self.initUser[j][3]):
+                #             self.V[i][j][1] = abs(self.V[i][j][1])
+                #         if (self.X[i][j][0] > self.initUser[j][2]):
+                #             self.V[i][j][0] = -abs(self.V[i][j][0])
+                #         if (self.X[i][j][1] > self.initUser[j][3]):
+                #             self.V[i][j][1] = -abs(self.V[i][j][1])
+                #         if (self.V[i][j][0] > self.maxV[j]):
+                #             self.V[i][j][0] = self.maxV[j]
+                #         if (self.V[i][j][1] > self.maxV[j]):
+                #             self.V[i][j][1] = self.maxV[j]
+                #         elif (self.V[i][j][0] < -self.maxV[j]):
+                #             self.V[i][j][0] = -self.maxV[j]
+                #         elif (self.V[i][j][1] < -self.maxV[j]):
+                #             self.V[i][j][1] = -self.maxV[j]
+                #             # self.V[i][j][1] = -self.maxV[j]
+                #
+                #         self.X[i][j][0] = self.X[i][j][0] + self.V[i][j][0]
+                #         self.X[i][j][1] = self.X[i][j][1] + self.V[i][j][1]
+                #         # 更新位置时还需要增加限制条件，超出限制条件时要给一定的惩罚
+                #         if (math.sqrt(math.pow((self.X[i][j][0] - self.initUser[j][2]), 2) + math.pow(
+                #                 (self.X[i][j][1] - self.initUser[j][3]), 2)) > self.initUser[j][
+                #             4]):  # 用户出界，则选择这条路线上最远的一个点
+                #             a = self.X[i][j][0]
+                #             b = self.X[i][j][1]
+                #             self.X[i][j][0] = self.initUser[j][2] - self.initUser[j][4] * (
+                #                         self.initUser[j][2] - a) / math.sqrt(
+                #                 math.pow((a - self.initUser[j][2]), 2) + math.pow((b - self.initUser[j][3]), 2))
+                #
+                #             self.X[i][j][1] = self.initUser[j][3] - self.initUser[j][4] * (
+                #                         self.initUser[j][3] - b) / math.sqrt(
+                #                 math.pow((a - self.initUser[j][2]), 2) + math.pow((b - self.initUser[j][3]), 2))
+                #
+                #         if (self.X[i][j][0] < 0):
+                #             # self.V[i][j][0]=0
+                #             self.X[i][j][0] = 0
+                #         elif (self.X[i][j][0] > celllength * cell):
+                #             # self.V[i][j][0] = 0
+                #             self.X[i][j][0] = celllength * cell
+                #         if (self.X[i][j][1] < 0):
+                #             # self.V[i][j][1] = 0
+                #             self.X[i][j][1] = 0
+                #         elif (self.X[i][j][1] > celllength * cell):
+                #             # self.V[i][j][1] = 0
+                #             self.X[i][j][1] = celllength * cell
+                #
+                # else:
+                for j in range (self.dim):
+                    #更新速度，满足约束条件，若越界则将其设为边界值（圆形边界值如何设置？）淘汰越界的点（某一维，根据该以为的数据来更新）
+                    self.V[i][j][0]=self.w*self.V[i][j][0]+self.c1*self.r1*(self.pbest[i][j][0]-self.X[i][j][0])+self.c2*self.r2*(self.gbest[j][0]-self.X[i][j][0])
+                    self.V[i][j][1] = self.w * self.V[i][j][1] + self.c1 * self.r1 * (self.pbest[i][j][1] - self.X[i][j][1]) + self.c2 * self.r2 * (self.gbest[j][1] - self.X[i][j][1])
+                    if(self.V[i][j][0]>self.maxV[j]):
+                        self.V[i][j][0]=self.maxV[j]
+                    if (self.V[i][j][1] > self.maxV[j]):
+                        self.V[i][j][1] = self.maxV[j]
+                    elif(self.V[i][j][0]<-self.maxV[j]):
+                        self.V[i][j][0] = -self.maxV[j]
+                    elif (self.V[i][j][1] < -self.maxV[j]):
+                        self.V[i][j][1] = -self.maxV[j]
+                        # self.V[i][j][1] = -self.maxV[j]
 
-                        self.X[i][j][0]=self.X[i][j][0]+self.V[i][j][0]
-                        self.X[i][j][1] = self.X[i][j][1] + self.V[i][j][1]
-                        #更新位置时还需要增加限制条件，超出限制条件时要给一定的惩罚
-                        if(math.sqrt(math.pow((self.X[i][j][0] - self.initUser[j][2]), 2) + math.pow((self.X[i][j][1] - self.initUser[j][3]), 2))>self.initUser[j][4]):   #用户出界，则选择这条路线上最远的一个点
-                            a=self.X[i][j][0]
-                            b=self.X[i][j][1]
-                            self.X[i][j][0]=self.initUser[j][2]-self.initUser[j][4]*(self.initUser[j][2]-a)/math.sqrt(math.pow((a - self.initUser[j][2]), 2) + math.pow((b - self.initUser[j][3]), 2))
+                    self.X[i][j][0]=self.X[i][j][0]+self.V[i][j][0]
+                    self.X[i][j][1] = self.X[i][j][1] + self.V[i][j][1]
+                    #更新位置时还需要增加限制条件，超出限制条件时要给一定的惩罚
+                    if(math.sqrt(math.pow((self.X[i][j][0] - self.initUser[j][2]), 2) + math.pow((self.X[i][j][1] - self.initUser[j][3]), 2))>self.initUser[j][4]):   #用户出界，则选择这条路线上最远的一个点
+                        a=self.X[i][j][0]
+                        b=self.X[i][j][1]
+                        self.X[i][j][0]=self.initUser[j][2]-self.initUser[j][4]*(self.initUser[j][2]-a)/math.sqrt(math.pow((a - self.initUser[j][2]), 2) + math.pow((b - self.initUser[j][3]), 2))
 
-                            self.X[i][j][1] = self.initUser[j][3] - self.initUser[j][4] * (self.initUser[j][3] - b) / math.sqrt(math.pow((a - self.initUser[j][2]), 2) + math.pow((b - self.initUser[j][3]), 2))
+                        self.X[i][j][1] = self.initUser[j][3] - self.initUser[j][4] * (self.initUser[j][3] - b) / math.sqrt(math.pow((a - self.initUser[j][2]), 2) + math.pow((b - self.initUser[j][3]), 2))
 
-                        if(self.X[i][j][0]<0):
-                            # self.V[i][j][0]=0
-                            self.X[i][j][0]=0
-                        elif(self.X[i][j][0]>celllength*cell):
-                            # self.V[i][j][0] = 0
-                            self.X[i][j][0]=celllength*cell
-                        if (self.X[i][j][1] < 0):
-                            # self.V[i][j][1] = 0
-                            self.X[i][j][1] = 0
-                        elif (self.X[i][j][1] > celllength * cell):
-                            # self.V[i][j][1] = 0
-                            self.X[i][j][1] = celllength * cell
+                    if(self.X[i][j][0]<0):
+                        # self.V[i][j][0]=0
+                        self.X[i][j][0]=0
+                    elif(self.X[i][j][0]>celllength*cell):
+                        # self.V[i][j][0] = 0
+                        self.X[i][j][0]=celllength*cell
+                    if (self.X[i][j][1] < 0):
+                        # self.V[i][j][1] = 0
+                        self.X[i][j][1] = 0
+                    elif (self.X[i][j][1] > celllength * cell):
+                        # self.V[i][j][1] = 0
+                        self.X[i][j][1] = celllength * cell
 
 
-                        plt.scatter(self.X[i][j][0], self.X[i][j][1], marker='.',c=Color[i%10])
+                    plt.scatter(self.X[i][j][0], self.X[i][j][1], marker='.',c=Color[i%10])
             for i in range(usernum):
                 plt.scatter(self.initUser[i][2], self.initUser[i][3], marker='x', c=Color[i%10])  # 用户的目的地
             for i in range(cell * cell):
@@ -289,26 +340,30 @@ class PSO():
             print(self.fit) #输出最优值
         # print("gbest",self.gbest)
 
-        return fitness
+        return self.gbest,self.fit,fitness
 #在代码中如何判断用户到达的点
 
 
 T=100
 #km
 plt.ion()
-my_pso1=PSO(pN=20,dim=usernum,max_iter=T,pB=1,k=1,User=User,flag=0)
+my_pso1=PSO(pN=50,dim=usernum,max_iter=T,pB=1,k=1,User=User,flag=0)
 my_pso1.init_Population()
-fitness2=my_pso1.iterator()
+UUser,ffit,fitness2=my_pso1.iterator()
 plt.ioff()
 print("fitness2",fitness2)
+print("UUser",UUser)
+print("ffit",ffit)
 
 #greedy
 plt.ion()
-my_pso2=PSO(pN=20,dim=usernum,max_iter=T,pB=1,k=1,User=User,flag=1)
+my_pso2=PSO(pN=50,dim=usernum,max_iter=T,pB=1,k=1,User=User,flag=1)
 my_pso2.init_Population()
-fitness1=my_pso2.iterator()
+UUser1,ffit1,fitness1=my_pso2.iterator()
 plt.ioff()
 print("fitness1",fitness1)
+print("UUser",UUser1)
+print("ffit",ffit1)
 # 用户有多的，即有一些用户不需要移动，这种情况还未处理
 
 # 画图
