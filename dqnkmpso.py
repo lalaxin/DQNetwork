@@ -39,12 +39,12 @@ T=5  #时间时段
 walknum=10 #步行的距离分为10个步行长度来采取动作
 RB=20  #预算约束
 # 横向网格数
-xcell=2
+cell=2
 # 纵向网格数
-ycell=2
+# ycell=2
 # 单个网格长度
 celllength=3
-regionnum=xcell*ycell #区域个数
+regionnum=cell*cell #区域个数
 pricek=2
 usernum=10 #用户数为10
 
@@ -52,7 +52,7 @@ usernum=10 #用户数为10
 init_region = list()
 for i in range(regionnum):
     # print(i)
-    regionn =[0,random.randint(1,2),random.randint(0,10),(i%xcell)*celllength+celllength/2,(int(i/xcell))*celllength+celllength/2]
+    regionn =[0,random.randint(1,2),random.randint(0,10),(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
     # print(r)
     init_region.append(regionn)
     # print(region)
@@ -62,7 +62,7 @@ def init_user_demand():
     userdemand=[[[0]for i in range (usernum)] for t in range (T)]
     for t in range (T):
         for i in range (usernum):
-            userdemand[t][i]=[random.randint(0,celllength*xcell),random.randint(0,celllength*ycell),random.randint(0,celllength*xcell),random.randint(0,celllength*ycell),random.uniform(0,celllength/2),-1,-1]
+            userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.uniform(0,celllength/2),-1,-1]
     return userdemand
 # 初始化状态
 def init_state():
@@ -278,6 +278,8 @@ class PSO():
                 lslact = math.sqrt(math.pow((self.User[i][0] - X[i][0]), 2) + math.pow((self.User[i][1] - X[i][1]), 2))  #起点到实际位置
                 larrlact = math.sqrt(math.pow((X[i][0] - self.initUser[i][2]), 2) + math.pow((X[i][1] - self.initUser[i][3]), 2))
                 self.pi[i]=self.pB*(lslact-lslarr)+self.k*(larrlact)*(larrlact)
+                if (self.pi[i] < 0):
+                    self.pi[i] = 0
         #计算每一维的d再求其平方和，若越界则给其给其惩罚
 
         # print("sum_pi",sum(self.pi))
@@ -300,7 +302,7 @@ class PSO():
     #初始化种群
     def init_Population(self):
         for i in range(self.dim):
-            self.gbest[i]=[xcell*celllength,xcell*celllength]
+            self.gbest[i]=[cell*celllength,cell*celllength]
         #每一个粒子包含user个用户数据
         for i in range(self.pN):
             for j in range(self.dim):
@@ -320,12 +322,12 @@ class PSO():
 
                 if (self.X[i][j][0] < 0):
                     self.X[i][j][0] = 0
-                elif (self.X[i][j][0] > celllength * xcell):
-                    self.X[i][j][0] = celllength *xcell
+                elif (self.X[i][j][0] > celllength * cell):
+                    self.X[i][j][0] = celllength *cell
                 if (self.X[i][j][1] < 0):
                     self.X[i][j][1] = 0
-                elif (self.X[i][j][1] > celllength * xcell):
-                    self.X[i][j][1] = celllength * xcell
+                elif (self.X[i][j][1] > celllength * cell):
+                    self.X[i][j][1] = celllength * cell
 
             self.pbest[i]=self.X[i]
             tmp=self.function(self.X[i])  #输入的是一个粒子的多维数据
@@ -348,18 +350,6 @@ class PSO():
             # print("X",self.X)
             # print("V",self.V)
 
-            # for k in range(self.pN):   #更新gbest/pbest
-            #     temp=self.function(self.X[k])  #第k个粒子
-            #     print("temp",k,temp)
-            #     if temp<self.p_fit[k]:   #更新个体最优
-            #         self.p_fit[k]=temp
-            #         self.pbest[k]=self.X[k]
-            #         if self.p_fit[k] <self.fit :   #更新全局最优,具有多个元素的数组的真值是不明确的。使用a.any()或a.all()
-            #             self.gbest=self.X[k]
-            #             # for m in range (usernum):
-            #             #     print("第k个粒子",k,"(",self.User[m][5],self.User[m][6],")")
-            #             # print(self.initUser[k][1])
-            #             self.fit=self.p_fit[k]
 
             # print(t)
             # print("fit",self.fit)
@@ -380,42 +370,103 @@ class PSO():
 
                 # 若超过预算限制，则temp=1e10，此时粒子不知如何处理
 
-                for j in range (self.dim):
-                    #更新速度，满足约束条件，若越界则将其设为边界值（圆形边界值如何设置？）淘汰越界的点（某一维，根据该以为的数据来更新）
-                    self.V[i][j][0]=self.w*self.V[i][j][0]+self.c1*self.r1*(self.pbest[i][j][0]-self.X[i][j][0])+self.c2*self.r2*(self.gbest[j][0]-self.X[i][j][0])
-                    self.V[i][j][1] = self.w * self.V[i][j][1] + self.c1 * self.r1 * (self.pbest[i][j][1] - self.X[i][j][1]) + self.c2 * self.r2 * (self.gbest[j][1] - self.X[i][j][1])
-                    if(self.V[i][j][0]>self.maxV[j]):
-                        self.V[i][j][0]=self.maxV[j]
-                    if (self.V[i][j][1] > self.maxV[j]):
-                        self.V[i][j][1] = self.maxV[j]
-                    elif(self.V[i][j][0]<-self.maxV[j]):
-                        self.V[i][j][0] = -self.maxV[j]
-                    elif (self.V[i][j][1] < -self.maxV[j]):
-                        self.V[i][j][1] = -self.maxV[j]
-                        # self.V[i][j][1] = -self.maxV[j]
+                if (temp == 1e10):
+                    for j in range(self.dim):
+                        # 更新速度，满足约束条件，若越界则将其设为边界值（圆形边界值如何设置？）淘汰越界的点（某一维，根据该以为的数据来更新）
+                        if (self.X[i][j][0] < self.initUser[j][2]):
+                            self.V[i][j][0] = abs(self.V[i][j][0])
+                        if (self.X[i][j][1] < self.initUser[j][3]):
+                            self.V[i][j][1] = abs(self.V[i][j][1])
+                        if (self.X[i][j][0] > self.initUser[j][2]):
+                            self.V[i][j][0] = -abs(self.V[i][j][0])
+                        if (self.X[i][j][1] > self.initUser[j][3]):
+                            self.V[i][j][1] = -abs(self.V[i][j][1])
+                        if (self.V[i][j][0] > self.maxV[j]):
+                            self.V[i][j][0] = self.maxV[j]
+                        if (self.V[i][j][1] > self.maxV[j]):
+                            self.V[i][j][1] = self.maxV[j]
+                        elif (self.V[i][j][0] < -self.maxV[j]):
+                            self.V[i][j][0] = -self.maxV[j]
+                        elif (self.V[i][j][1] < -self.maxV[j]):
+                            self.V[i][j][1] = -self.maxV[j]
+                            # self.V[i][j][1] = -self.maxV[j]
 
-                    self.X[i][j][0]=self.X[i][j][0]+self.V[i][j][0]
-                    self.X[i][j][1] = self.X[i][j][1] + self.V[i][j][1]
-                    #更新位置时还需要增加限制条件，超出限制条件时要给一定的惩罚
-                    if(math.sqrt(math.pow((self.X[i][j][0] - self.initUser[j][2]), 2) + math.pow((self.X[i][j][1] - self.initUser[j][3]), 2))>self.initUser[j][4]):   #用户出界，则选择这条路线上最远的一个点
-                        a=self.X[i][j][0]
-                        b=self.X[i][j][1]
-                        self.X[i][j][0]=self.initUser[j][2]-self.initUser[j][4]*(self.initUser[j][2]-a)/math.sqrt(math.pow((a - self.initUser[j][2]), 2) + math.pow((b - self.initUser[j][3]), 2))
+                        self.X[i][j][0] = self.X[i][j][0] + self.V[i][j][0]
+                        self.X[i][j][1] = self.X[i][j][1] + self.V[i][j][1]
+                        # 更新位置时还需要增加限制条件，超出限制条件时要给一定的惩罚
+                        if (math.sqrt(math.pow((self.X[i][j][0] - self.initUser[j][2]), 2) + math.pow(
+                                (self.X[i][j][1] - self.initUser[j][3]), 2)) > self.initUser[j][
+                            4]):  # 用户出界，则选择这条路线上最远的一个点
+                            a = self.X[i][j][0]
+                            b = self.X[i][j][1]
+                            self.X[i][j][0] = self.initUser[j][2] - self.initUser[j][4] * (
+                                    self.initUser[j][2] - a) / math.sqrt(
+                                math.pow((a - self.initUser[j][2]), 2) + math.pow((b - self.initUser[j][3]), 2))
 
-                        self.X[i][j][1] = self.initUser[j][3] - self.initUser[j][4] * (self.initUser[j][3] - b) / math.sqrt(math.pow((a - self.initUser[j][2]), 2) + math.pow((b - self.initUser[j][3]), 2))
+                            self.X[i][j][1] = self.initUser[j][3] - self.initUser[j][4] * (
+                                    self.initUser[j][3] - b) / math.sqrt(
+                                math.pow((a - self.initUser[j][2]), 2) + math.pow((b - self.initUser[j][3]), 2))
 
-                    if(self.X[i][j][0]<0):
-                        # self.V[i][j][0]=0
-                        self.X[i][j][0]=0
-                    elif(self.X[i][j][0]>celllength*xcell):
-                        # self.V[i][j][0] = 0
-                        self.X[i][j][0]=celllength*xcell
-                    if (self.X[i][j][1] < 0):
-                        # self.V[i][j][1] = 0
-                        self.X[i][j][1] = 0
-                    elif (self.X[i][j][1] > celllength * xcell):
-                        # self.V[i][j][1] = 0
-                        self.X[i][j][1] = celllength * xcell
+                        if (self.X[i][j][0] < 0):
+                            # self.V[i][j][0]=0
+                            self.X[i][j][0] = 0
+                        elif (self.X[i][j][0] > celllength * cell):
+                            # self.V[i][j][0] = 0
+                            self.X[i][j][0] = celllength * cell
+                        if (self.X[i][j][1] < 0):
+                            # self.V[i][j][1] = 0
+                            self.X[i][j][1] = 0
+                        elif (self.X[i][j][1] > celllength * cell):
+                            # self.V[i][j][1] = 0
+                            self.X[i][j][1] = celllength * cell
+
+                else:
+                    for j in range(self.dim):
+                        # 更新速度，满足约束条件，若越界则将其设为边界值（圆形边界值如何设置？）淘汰越界的点（某一维，根据该以为的数据来更新）
+                        self.V[i][j][0] = self.w * self.V[i][j][0] + self.c1 * self.r1 * (
+                                    self.pbest[i][j][0] - self.X[i][j][0]) + self.c2 * self.r2 * (
+                                                      self.gbest[j][0] - self.X[i][j][0])
+                        self.V[i][j][1] = self.w * self.V[i][j][1] + self.c1 * self.r1 * (
+                                    self.pbest[i][j][1] - self.X[i][j][1]) + self.c2 * self.r2 * (
+                                                      self.gbest[j][1] - self.X[i][j][1])
+                        if (self.V[i][j][0] > self.maxV[j]):
+                            self.V[i][j][0] = self.maxV[j]
+                        if (self.V[i][j][1] > self.maxV[j]):
+                            self.V[i][j][1] = self.maxV[j]
+                        elif (self.V[i][j][0] < -self.maxV[j]):
+                            self.V[i][j][0] = -self.maxV[j]
+                        elif (self.V[i][j][1] < -self.maxV[j]):
+                            self.V[i][j][1] = -self.maxV[j]
+                            # self.V[i][j][1] = -self.maxV[j]
+
+                        self.X[i][j][0] = self.X[i][j][0] + self.V[i][j][0]
+                        self.X[i][j][1] = self.X[i][j][1] + self.V[i][j][1]
+                        # 更新位置时还需要增加限制条件，超出限制条件时要给一定的惩罚
+                        if (math.sqrt(math.pow((self.X[i][j][0] - self.initUser[j][2]), 2) + math.pow(
+                                (self.X[i][j][1] - self.initUser[j][3]), 2)) > self.initUser[j][
+                            4]):  # 用户出界，则选择这条路线上最远的一个点
+                            a = self.X[i][j][0]
+                            b = self.X[i][j][1]
+                            self.X[i][j][0] = self.initUser[j][2] - self.initUser[j][4] * (
+                                        self.initUser[j][2] - a) / math.sqrt(
+                                math.pow((a - self.initUser[j][2]), 2) + math.pow((b - self.initUser[j][3]), 2))
+
+                            self.X[i][j][1] = self.initUser[j][3] - self.initUser[j][4] * (
+                                        self.initUser[j][3] - b) / math.sqrt(
+                                math.pow((a - self.initUser[j][2]), 2) + math.pow((b - self.initUser[j][3]), 2))
+
+                        if (self.X[i][j][0] < 0):
+                            # self.V[i][j][0]=0
+                            self.X[i][j][0] = 0
+                        elif (self.X[i][j][0] > celllength * cell):
+                            # self.V[i][j][0] = 0
+                            self.X[i][j][0] = celllength * cell
+                        if (self.X[i][j][1] < 0):
+                            # self.V[i][j][1] = 0
+                            self.X[i][j][1] = 0
+                        elif (self.X[i][j][1] > celllength * cell):
+                            # self.V[i][j][1] = 0
+                            self.X[i][j][1] = celllength * cell
 
             # print("gbest2")
             # print("X",i,self.X)
@@ -430,10 +481,10 @@ def run_this():
     print('\nCollecting experience...')
     # run this
     sumreward=[]
-    for i_episode in range(400):
+    for i_episode in range(100):
         # 初始化环境
         sum_r=0
-        done=False
+        # done=False
         s = init_state()
         s_=copy.deepcopy(s)
         ep_r = 0
@@ -443,69 +494,117 @@ def run_this():
         for t in range (T):
             # dqn.choose_action()一下只能输出一个动作，动作的维度是用户数，输出的a是每一个用户采取的哪一个动作
             # 首先根据当前observation选取一个动作
-            if(t!=T-1):
-                # 先判断当前时段用户所在的区域以及此时区域内车的数量
-                for i in range(regionnum):
-                    region[i][1]=s[i]
-                    region[i][0]=0
-
-                # 判断每个用户在哪骑车，并更新一下状态（区域内车辆数-1）
-                for i in range(usernum):
-                    if (user[t][i][0] == xcell * celllength):
-                        tempa = int(user[t][i][1] / celllength) * xcell + int(user[t][i][0] / celllength) - 1
-                    elif (user[t][i][1] == ycell * celllength):
-                        tempa=int(user[t][i][1] / celllength) * xcell + int(user[t][i][0] / celllength) - xcell
-                    elif (user[t][i][0] == xcell * celllength & user[t][i][1] == ycell * celllength):
-                        tempa =int(xcell*ycell - 1)
-                    else:
-                        tempa = int(user[t][i][1] / celllength) * xcell + int(user[t][i][0] / celllength)
-                    # print(a)
-                    if (tempa <= xcell*ycell):
-                        region[tempa][1]-=1
-                        s_[tempa]-=1
-
-                #判断下一时刻到来的用户数所在区域，并获得该区域在下一时刻的缺车数
-                for i in range(usernum):
-                    if (user[t+1][i][0] == xcell * celllength):
-                        tempaa = int(user[t+1][i][1] / celllength) * xcell + int(user[t+1][i][0] / celllength) - 1
-                    elif (user[t+1][i][1] == ycell * celllength):
-                        tempaa=int(user[t+1][i][1] / celllength) * xcell + int(user[t+1][i][0] / celllength) - xcell
-                    elif (user[t+1][i][0] == xcell * celllength & user[t+1][i][1] == ycell * celllength):
-                        tempaa =int(xcell*ycell - 1)
-                    else:
-                        tempaa = int(user[t+1][i][1] / celllength) * xcell + int(user[t+1][i][0] / celllength)
-                    # print(a)
-                    if (tempaa <= xcell*ycell):
-                        region[tempaa][0]+=1
-                for i in range(regionnum):
-                    region[i][2] = region[i][0] - region[i][1]
-
-
-            action = dqn.choose_action(s)
-            RB_t=(action/N_ACTIONS)*s[regionnum]
-            my_pso1 = PSO(pN=20, dim=usernum, max_iter=200, pB=1, k=1, User=user[t], flag=0,B=RB_t,region=region)
-            my_pso1.init_Population()
-            # tempuser为各个用户的终点，tempfit为最小d
-            tempuser,tempfit = my_pso1.iterator()
-
-            # 判断用户还车的区域来更新状态
-            for i in range (usernum):
-                if (tempuser[i][0] == xcell * celllength):
-                    tempb = int(tempuser[i][1] / celllength) * xcell + int(tempuser[i][0] / celllength) - 1
-                elif (tempuser[i][1] == xcell * celllength):
-                    tempb=int(tempuser[i][1] / celllength) * xcell + int(tempuser[i][0] / celllength) - xcell
-                elif (tempuser[i][0] == xcell * celllength and tempuser[i][1] == xcell * celllength):
-                    tempb = xcell * ycell - 1
-                else:
-                    tempb = int(tempuser[i][1] / celllength) * xcell + int(tempuser[i][0] / celllength)
-            # print(a)
-                if (tempb <= xcell * ycell):
-                    s_[tempb]+=1
-            s_[regionnum]-=RB_t
+            # 预算用完或不够，不能进行重平衡，则d=用户目的地到缺车区域(先匹配，再计算d即kmd)(有问题，应该是一个状态更新后来根据预算是否为0来求回报)
             if (s_[regionnum] <= 0):
-                done = True  # 若RB<0，预算算完，则本轮学习结束
+                r=0
+                # 选取动作
+                action = dqn.choose_action(s)
+                RB_t = (action / N_ACTIONS) * s[regionnum]
+                # 计算回报（预算用完时，用户直接将车还到目的地区域，然后匹配其期望还车区域，计算d，我们的d是用户的还车区域到期望还车区域的距离d）
+                init_User = copy.deepcopy(user[t])
+                pso = km(region=region, user=init_User)
+                pso.build_graph()
+                uuser = pso.KM()
+                for i in range(usernum):
+                    if (uuser[i][5] != -1 and uuser[i][6] != -1):
+                        r += -math.pow(uuser[i][5] - uuser[i][2], 2) + math.pow(uuser[i][6] - uuser[i][3], 2)
+                #     更新状态(取车区域-1，还车区域+1)
+                for i in range(usernum):
+                    if (user[t][i][0] == cell * celllength):
+                        tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength) - 1
+                    elif (user[t][i][1] == cell * celllength):
+                        tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength) - cell
+                    elif (user[t][i][0] == cell * celllength & user[t][i][1] == cell * celllength):
+                        tempa = int(cell * cell - 1)
+                    else:
+                        tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength)
+                    # print(a)
+                    if (tempa <= cell * cell):
+                        region[tempa][1] -= 1
+                        s_[tempa] -= 1
+
+                for i in range (usernum):
+                    if (uuser[i][2] == cell * celllength):
+                        tempb = int(uuser[i][3] / celllength) * cell + int(uuser[i][2] / celllength) - 1
+                    elif (uuser[i][3] == cell * celllength):
+                        tempb=int(uuser[i][3] / celllength) * cell + int(uuser[i][2] / celllength) - cell
+                    elif (uuser[i][3] == cell * celllength and uuser[i][1] == cell * celllength):
+                        tempb = cell * cell - 1
+                    else:
+                        tempb = int(tempuser[i][3] / celllength) * cell + int(tempuser[i][2] / celllength)
+                # print(a)
+                    if (tempb <= cell * cell):
+                        s_[tempb]+=1
+                s_[regionnum]-=RB_t
+                print(RB_t)
+
+            else:
+                if(t!=T-1):
+                    # 先判断当前时段用户所在的区域以及此时区域内车的数量
+                    for i in range(regionnum):
+                        region[i][1]=s[i]
+                        region[i][0]=0
+
+                    # 判断每个用户在哪骑车，并更新一下状态（区域内车辆数-1）
+                    for i in range(usernum):
+                        if (user[t][i][0] == cell * celllength):
+                            tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength) - 1
+                        elif (user[t][i][1] == cell * celllength):
+                            tempa=int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength) - xcell
+                        elif (user[t][i][0] == cell * celllength & user[t][i][1] == cell * celllength):
+                            tempa =int(cell*cell - 1)
+                        else:
+                            tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength)
+                        # print(a)
+                        if (tempa <= cell*cell):
+                            region[tempa][1]-=1
+                            s_[tempa]-=1
+
+                    #判断下一时刻到来的用户数所在区域，并获得该区域在下一时刻的缺车数
+                    for i in range(usernum):
+                        if (user[t+1][i][0] == cell * celllength):
+                            tempaa = int(user[t+1][i][1] / celllength) * cell + int(user[t+1][i][0] / celllength) - 1
+                        elif (user[t+1][i][1] == cell * celllength):
+                            tempaa=int(user[t+1][i][1] / celllength) * cell + int(user[t+1][i][0] / celllength) - cell
+                        elif (user[t+1][i][0] == cell * celllength & user[t+1][i][1] == cell * celllength):
+                            tempaa =int(cell*cell - 1)
+                        else:
+                            tempaa = int(user[t+1][i][1] / celllength) * cell + int(user[t+1][i][0] / celllength)
+                        # print(a)
+                        if (tempaa <= cell*cell):
+                            region[tempaa][0]+=1
+                    for i in range(regionnum):
+                        region[i][2] = region[i][0] - region[i][1]
+
+
+                action = dqn.choose_action(s)
+                RB_t=(action/N_ACTIONS)*s[regionnum]
+                my_pso1 = PSO(pN=50, dim=usernum, max_iter=200, pB=1, k=1, User=user[t], flag=0,B=RB_t,region=region)
+                my_pso1.init_Population()
+                # tempuser为各个用户的终点，tempfit为最小d
+                tempuser,tempfit = my_pso1.iterator()
+
+                # 判断用户还车的区域来更新状态
+                for i in range (usernum):
+                    if (tempuser[i][0] == cell * celllength):
+                        tempb = int(tempuser[i][1] / celllength) * cell + int(tempuser[i][0] / celllength) - 1
+                    elif (tempuser[i][1] == cell * celllength):
+                        tempb=int(tempuser[i][1] / celllength) * cell + int(tempuser[i][0] / celllength) - cell
+                    elif (tempuser[i][0] == cell * celllength and tempuser[i][1] == cell * celllength):
+                        tempb = cell * cell - 1
+                    else:
+                        tempb = int(tempuser[i][1] / celllength) * cell + int(tempuser[i][0] / celllength)
+                # print(a)
+                    if (tempb <= cell * cell):
+                        s_[tempb]+=1
+                s_[regionnum]-=RB_t
+                print(RB_t)
+
+
+                    # done = True  # 若RB<0，预算算完，则之后的状态的d直接根据用户的目的地及需求点算
+
+                r = -tempfit
             # 更新reward，即粒子群算法计算出来的d(d是最小化，reward是最大化)
-            r=-tempfit
             sum_r+=r
 
             # take action 与环境交互，施加改动作在环境中，得到下一个observation_,以及reward，done表示是否终结
@@ -519,15 +618,16 @@ def run_this():
                 # if done:
                 #     print('Ep: ', i_episode, '| Ep_r: ', round(ep_r, 2))
 
-            if done:
-                break
             s = s_
+            print("第t时的奖励",t,r)
+        print(sum_r)
         sumreward.append(sum_r)
+
         print(i_episode)
     plt.figure(1)
     plt.xlabel("iterators", size=14)
     plt.ylabel("reward", size=14)
-    t = np.array([t for t in range(0, 400)])  # 迭代次数
+    t = np.array([t for t in range(0, 100)])  # 迭代次数
     plt.plot(0, 3, color='g')
     fitness1 = np.array(sumreward)
     plt.plot(t, fitness1, label="greedy", color='b', linewidth=1)

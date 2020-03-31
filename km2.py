@@ -1,8 +1,8 @@
 import numpy as np
-from helloword import cellnum
+# from helloword import cellnum
 from helloword import Region
 from helloword import User
-from helloword import usernum
+# from helloword import usernum
 import math
 import copy
 
@@ -10,7 +10,7 @@ import copy
 # Region=[[0, 2, 0, 1.0, 1.0], [0, 2, 0, 3.0, 1.0], [0, 1, 0, 1.0, 3.0], [0, 1, 0, 3.0, 3.0]]
 # usernum=7
 
-print("22",Region)
+# print("22",Region)
 
 class km():
     def __init__(self,region,user):
@@ -18,18 +18,20 @@ class km():
         self.ep=1e-10
         self.region=region
         self.user=user
+        self.usernum=len(self.user)
+        # self.cellnum=cellnum
 
     # km最优匹配
     # 车匹配区域，左边表示车，相当于用户数，右边表示区域内缺车数（即缺的车数总和）
     # 生成的数组（用户横坐标，用户纵坐标，区域缺车横坐标，区域缺车纵坐标，权值（两者之间的距离1/d））
     def build_graph(self):
-        for i in range(cellnum):
+        for i in range(len(self.region)):
             if (self.region[i][2] > 0):
                 self.sumlackbike += self.region[i][2]
-        self.adj = [[0 for i in range(self.sumlackbike)] for i in range(usernum)]
-        for i in range(usernum):
+        self.adj = [[0 for i in range(self.sumlackbike)] for i in range(self.usernum)]
+        for i in range(self.usernum):
             a = 0
-            for j in range(cellnum):
+            for j in range(len(self.region)):
                 if (self.region[j][2] > 0):
                     for k in range(self.region[j][2]):
                         a += 1
@@ -37,8 +39,8 @@ class km():
                         d = math.sqrt(math.pow((self.user[i][2] - self.region[j][3]), 2) + math.pow((self.user[i][3] - self.region[j][4]), 2))
                         self.adj[i][a - 1] = [self.user[i][2], self.user[i][3], self.region[j][3], self.region[j][4], d]
 
-        self.adj_matrix = [[0 for i in range(self.sumlackbike)] for i in range(usernum)]
-        for i in range(usernum):
+        self.adj_matrix = [[0 for i in range(self.sumlackbike)] for i in range(self.usernum)]
+        for i in range(self.usernum):
             for j in range(self.sumlackbike):
                 self.adj_matrix[i][j] = -self.adj[i][j][4]
         # for i in range(usernum):
@@ -49,17 +51,17 @@ class km():
         #             if(self.adj_matrix[i][j]==temp[i][k]):
         #                 self.adj_matrix[i][j]=k+1
 
-        if(self.sumlackbike<usernum):
+        if(self.sumlackbike<self.usernum):
             self.adj_matrix=np.transpose(self.adj_matrix)
 
         # print(self.adj_matrix)
 
         self.label_left=np.max(self.adj_matrix,axis=1) # 取大函数，axis=1表示横向
-        self.label_right=np.zeros(max(usernum,self.sumlackbike))
-        self.match_right=np.ones(max(usernum,self.sumlackbike))*np.nan   #初始化匹配结果
-        self.visit_left=np.zeros(min(usernum,self.sumlackbike))
-        self.visit_right=np.zeros(max(usernum,self.sumlackbike)) # visit_right表示右边的缺车是否匹配
-        self.slack_right=np.ones(max(usernum,self.sumlackbike))*np.inf # np.inf表示最大的正数,记录每个汉子如果能被妹子倾心最少还需要多少期望值
+        self.label_right=np.zeros(max(self.usernum,self.sumlackbike))
+        self.match_right=np.ones(max(self.usernum,self.sumlackbike))*np.nan   #初始化匹配结果
+        self.visit_left=np.zeros(min(self.usernum,self.sumlackbike))
+        self.visit_right=np.zeros(max(self.usernum,self.sumlackbike)) # visit_right表示右边的缺车是否匹配
+        self.slack_right=np.ones(max(self.usernum,self.sumlackbike))*np.inf # np.inf表示最大的正数,记录每个汉子如果能被妹子倾心最少还需要多少期望值
 
         # print("usernum", usernum, "sumlackbike", self.sumlackbike)
 
@@ -85,20 +87,20 @@ class km():
     # km主函数
     def KM(self):
         distance=0
-        if (usernum <= self.sumlackbike):  # 每个用户都可以被匹配的情况下
-            for i in range(usernum):
+        if (self.usernum <= self.sumlackbike):  # 每个用户都可以被匹配的情况下
+            for i in range(self.usernum):
                 #重置辅助变量
-                self.slack_right=np.ones(max(usernum,self.sumlackbike))*np.inf
+                self.slack_right=np.ones(max(self.usernum,self.sumlackbike))*np.inf
                 while True:  # 为每个用户找到缺车区域，若找不到就降低期望值，直到找到为止(由于两边数量不一样，不一定给每个用户都能找到匹配# )
                     #每一轮需重置辅助变量
-                    self.visit_left = np.zeros(min(usernum, self.sumlackbike))
-                    self.visit_right = np.zeros(max(usernum, self.sumlackbike))  # visit_right表示右边的缺车是否匹配
+                    self.visit_left = np.zeros(min(self.usernum, self.sumlackbike))
+                    self.visit_right = np.zeros(max(self.usernum, self.sumlackbike))  # visit_right表示右边的缺车是否匹配
                     if self.find_path(i): break  # 如果找到匹配项就退出，未找到则降低期望值
                     d = np.inf  # 最小可降低的期望值，其表示最大的正数
                     for j, slack in enumerate(self.slack_right):
                         if not self.visit_right[j] and slack < d:
                             d = slack
-                    for k in range(usernum):
+                    for k in range(self.usernum):
                         if self.visit_left[k]: self.label_left[k] -= d  # 所有访问过的用户降低期望值
                     for n in range(self.sumlackbike):
                         if self.visit_right[n]:
@@ -113,10 +115,10 @@ class km():
         else:  # 用户数大于缺车数时，反过来，用户来匹配缺车数
             # 初始化辅助变量
             for i in range(self.sumlackbike):
-                self.slack_right = np.ones(max(usernum, self.sumlackbike)) * np.inf
+                self.slack_right = np.ones(max(self.usernum, self.sumlackbike)) * np.inf
                 while True:  #
-                    self.visit_left = np.zeros(min(usernum, self.sumlackbike))
-                    self.visit_right = np.zeros(max(usernum, self.sumlackbike))  # visit_right表示右边的缺车是否匹配
+                    self.visit_left = np.zeros(min(self.usernum, self.sumlackbike))
+                    self.visit_right = np.zeros(max(self.usernum, self.sumlackbike))  # visit_right表示右边的缺车是否匹配
                     if self.find_path(i):
                         break  # 如果找到匹配项就退出，未找到则降低期望值
 
@@ -126,7 +128,7 @@ class km():
                             d = slack
                     for k in range(self.sumlackbike):
                         if self.visit_left[k]: self.label_left[k] -= d  # 所有访问过的女生降低期望值
-                    for n in range(usernum):
+                    for n in range(self.usernum):
                         if self.visit_right[n]:
                             self.label_right[n] += d  # 所有访问过的男生增加期望值
                     # print("match_right", self.match_right)
@@ -143,11 +145,13 @@ class km():
         return self.user
             # 求出所有的匹配的t好感度之和
         # 根据match_right[i]来确定用户和那一区域匹配
-init_User=copy.deepcopy(User)
-print("User",User)
-print("init_User",init_User)
-print("Region",Region)
-pso=km(region=Region,user=init_User)
-pso.build_graph()
-uuser=pso.KM()
-print(uuser)
+# init_User=copy.deepcopy(User)
+# # print("User",User)
+# # print("init_User",init_User)
+# # print("Region",Region)
+# pso=km(region=Region,user=init_User)
+# pso.build_graph()
+# uuser=pso.KM()
+# print(uuser)
+# print("Region",Region)
+# print("inituser",init_User)
