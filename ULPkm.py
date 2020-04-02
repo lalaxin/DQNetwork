@@ -98,21 +98,26 @@ class ulpkm:
 
     # 执行函数
     def ulpkm(self):
-        con00 = {'type': 'ineq', 'fun':self.constraint()}
-        con0 = {'type': 'ineq', 'fun': self.constraint0()}
-        con1 = {'type': 'ineq', 'fun': self.constraint1()}
-        con2 = {'type': 'ineq', 'fun': self.constraint2()}
-        con3 = {'type': 'ineq', 'fun': self.constraint3()}
-        con4 = {'type': 'ineq', 'fun': self.constraint4()}
-        con5 = {'type': 'ineq', 'fun': self.constraint5()}
-        con6 = {'type': 'ineq', 'fun': self.constraint6()}
-        con7 = {'type': 'ineq', 'fun': self.constraint7()}
-        con8 = {'type': 'ineq', 'fun': self.constraint8()}
-        con9 = {'type': 'ineq', 'fun': self.constraint9()}
-        con10 = {'type': 'ineq', 'fun': self.constraint10()}
-        con=([con00,con0,con1,con2,con3,con4,con5,con6,con7,con8,con9,con10])
-        for i in range(len(self.user)+1):
-            self.cons[i]=con[i]
+        self.cons[0]={'type': 'ineq', 'fun':self.constraint()}
+        for i in range (len(self.user)+1):
+            if(i!=len(self.user)):
+                self.cons[i+1]={'type': 'ineq', 'fun':lambda x:-(math.pow(self.x[2*i]-self.user[i][2],2)+math.pow(self.x[2*i+1]-self.user[i][3],2)-math.pow(self.user[i][4],2))}
+
+        # con00 = {'type': 'ineq', 'fun':self.constraint()}
+        # con0 = {'type': 'ineq', 'fun': self.constraint0()}
+        # con1 = {'type': 'ineq', 'fun': self.constraint1()}
+        # con2 = {'type': 'ineq', 'fun': self.constraint2()}
+        # con3 = {'type': 'ineq', 'fun': self.constraint3()}
+        # con4 = {'type': 'ineq', 'fun': self.constraint4()}
+        # con5 = {'type': 'ineq', 'fun': self.constraint5()}
+        # con6 = {'type': 'ineq', 'fun': self.constraint6()}
+        # con7 = {'type': 'ineq', 'fun': self.constraint7()}
+        # con8 = {'type': 'ineq', 'fun': self.constraint8()}
+        # con9 = {'type': 'ineq', 'fun': self.constraint9()}
+        # con10 = {'type': 'ineq', 'fun': self.constraint10()}
+        # con=([con00,con0,con1,con2,con3,con4,con5,con6,con7,con8,con9,con10])
+        # for i in range(len(self.user)+1):
+        #     self.cons[i]=con[i]
 
         solution = minimize(self.objective(), self.x0, method='SLSQP', bounds=self.bnds, constraints=self.cons)
         self.x=solution.x

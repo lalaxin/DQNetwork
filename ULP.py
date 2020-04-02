@@ -20,7 +20,7 @@ def constraint2(x):
 b = (0.0, 4)
 bnds = (b, b,b,b)
 
-con1 = {'type': 'ineq', 'fun': constraint1}
+con1 = {'type': 'ineq', 'fun':lambda x:-(math.sqrt((x[0]-4)**2+(x[1]-1)**2)-0.95)}
 con2 = {'type': 'ineq', 'fun': constraint2}
 con3 = {'type': 'ineq', 'fun': constraint3}
 # con4 = {'type': 'eq', 'fun': constraint4}
