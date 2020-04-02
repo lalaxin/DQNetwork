@@ -145,13 +145,13 @@ class km():
         return self.user
             # 求出所有的匹配的t好感度之和
         # 根据match_right[i]来确定用户和那一区域匹配
-init_User=copy.deepcopy(User)
-# print("User",User)
-# print("init_User",init_User)
+# init_User=copy.deepcopy(User)
+# # print("User",User)
+# # print("init_User",init_User)
+# # print("Region",Region)
+# pso=km(region=Region,user=init_User)
+# pso.build_graph()
+# uuser=pso.KM()
+# print(uuser)
 # print("Region",Region)
-pso=km(region=Region,user=init_User)
-pso.build_graph()
-uuser=pso.KM()
-print(uuser)
-print("Region",Region)
-print("inituser",init_User)
+# print("inituser",init_User)

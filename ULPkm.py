@@ -6,7 +6,7 @@ import copy
 from km2 import km
 
 class ulpkm:
-    def __init__(self,user,region,celllength,B):
+    def __init__(self,user,region,celllength,B,pb,pk):
         # 预算约束
         self.B=B
         self.user=user
@@ -23,6 +23,8 @@ class ulpkm:
         self.bnds=np.zeros(len(user))
         # 约束条件个数
         self.cons=np.zeros(len(user)+1,dtype=dict)
+        self.pB=pb
+        self.k=pk
 
         self.kmuser=copy.deepcopy(user)
         init_region=copy.deepcopy(region)
@@ -38,6 +40,9 @@ class ulpkm:
         for i in range (len(user)):
             self.x0[2*i]=self.user[i][2]
             self.x0[2*i+1]=self.user[i][3]
+        for i in range (len(user)):
+            self.x[2*i]=self.user[i][2]
+            self.x[2*i+1]=self.user[i][3]
 
     # 目标函数
     def objective(self):
@@ -50,6 +55,7 @@ class ulpkm:
     #     约束条件0:满足预算约束限制
     def constraint(self):
         temp=0
+        print("lalala")
         for i in range (len(self.kmuser)):
             # 用户匹配缺车匹配成功
             if(self.kmuser[i][5]!=-1 and self.kmuser[i][6]!=-1):
@@ -92,18 +98,18 @@ class ulpkm:
 
     # 执行函数
     def ulpkm(self):
-        con00 = {'type': 'ineq', 'fun': self.constraint}
-        con0 = {'type': 'ineq', 'fun': self.constraint0}
-        con1 = {'type': 'ineq', 'fun': self.constraint1}
-        con2 = {'type': 'ineq', 'fun': self.constraint2}
-        con3 = {'type': 'ineq', 'fun': self.constraint3}
-        con4 = {'type': 'ineq', 'fun': self.constraint4}
-        con5 = {'type': 'ineq', 'fun': self.constraint5}
-        con6 = {'type': 'ineq', 'fun': self.constraint6}
-        con7 = {'type': 'ineq', 'fun': self.constraint7}
-        con8 = {'type': 'ineq', 'fun': self.constraint8}
-        con9 = {'type': 'ineq', 'fun': self.constraint9}
-        con10 = {'type': 'ineq', 'fun': self.constraint10}
+        con00 = {'type': 'ineq', 'fun':self.constraint()}
+        con0 = {'type': 'ineq', 'fun': self.constraint0()}
+        con1 = {'type': 'ineq', 'fun': self.constraint1()}
+        con2 = {'type': 'ineq', 'fun': self.constraint2()}
+        con3 = {'type': 'ineq', 'fun': self.constraint3()}
+        con4 = {'type': 'ineq', 'fun': self.constraint4()}
+        con5 = {'type': 'ineq', 'fun': self.constraint5()}
+        con6 = {'type': 'ineq', 'fun': self.constraint6()}
+        con7 = {'type': 'ineq', 'fun': self.constraint7()}
+        con8 = {'type': 'ineq', 'fun': self.constraint8()}
+        con9 = {'type': 'ineq', 'fun': self.constraint9()}
+        con10 = {'type': 'ineq', 'fun': self.constraint10()}
         con=([con00,con0,con1,con2,con3,con4,con5,con6,con7,con8,con9,con10])
         for i in range(len(self.user)+1):
             self.cons[i]=con[i]
@@ -116,7 +122,7 @@ class ulpkm:
 
 User=[[4, 4, 4, 1, 0.9568767390288544, -1, -1], [0, 0, 3, 0, 0.3508448982850835, -1, -1], [2, 1, 2, 4, 0.5086846864053723, -1, -1], [0, 3, 1, 2, 0.4112544710484871, -1, -1]]
 Region=[[0, 2, 6, 1.0, 1.0], [0, 1, 10, 3.0, 1.0], [0, 1, 3, 1.0, 3.0], [0, 2, 9, 3.0, 3.0]]
-test1=ulpkm(user=User,region=Region,celllength=2,B=0.9)
+test1=ulpkm(user=User,region=Region,celllength=2,B=0.9,pb=1,pk=2)
 test1.ulpkm()
 
 

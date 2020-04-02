@@ -25,7 +25,7 @@ con2 = {'type': 'ineq', 'fun': constraint2}
 con3 = {'type': 'ineq', 'fun': constraint3}
 # con4 = {'type': 'eq', 'fun': constraint4}
 cons = ([con1, con2,con3])  # 2个约束条件
-x0 = np.array([0, 0,0,0])
+x0 = np.zeros(4)
 # 计算
 solution = minimize(objective, x0, method='SLSQP',  bounds=bnds, constraints=cons)
 x = solution.x

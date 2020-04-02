@@ -34,7 +34,7 @@ class DP:
             self.kmUser[i][3] = kmX[2*i+1]
         init_Region1=copy.deepcopy(self.Region)
 
-        psokm = km(region=init_Region1,user=self.kmUser,cellnum=xcell*celllength)
+        psokm = km(region=init_Region1,user=self.kmUser)
         psokm.build_graph()
         kkmUser=psokm.KM()
         return kkmUser
