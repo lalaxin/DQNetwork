@@ -2,7 +2,7 @@ from scipy import optimize as opt
 import numpy as np
 from scipy.optimize import minimize
 import math
-x=np.zeros(10)
+
 # 目标函数
 def objective(x):
 	return (x[0]-3)**2+(x[1]-1)**2+(x[2]-3)**2+(x[3]-1)**2
@@ -21,16 +21,17 @@ b = (0.0, 4)
 bnds = (b, b,b,b)
 
 con1 = {'type': 'ineq', 'fun':lambda x:-(math.sqrt((x[0]-4)**2+(x[1]-1)**2)-0.95)}
-con2 = {'type': 'ineq', 'fun': constraint2}
-con3 = {'type': 'ineq', 'fun': constraint3}
+con2 = {'type': 'ineq', 'fun':lambda x:-(math.sqrt(x[2]**2+x[3]**2)+2*((x[2]-3)**2)+2*(x[3]**2)+math.sqrt((x[0]-4)**2+(x[1]-4)**2)+2*((x[0]-4)**2)+2*((x[1]-1)**2)-6.9) }
+con3 = {'type': 'ineq', 'fun': lambda x:-(math.sqrt((x[2]-3)**2+x[3]**2)-0.35)}
 # con4 = {'type': 'eq', 'fun': constraint4}
 cons = ([con1, con2,con3])  # 2个约束条件
 x0 = np.zeros(4)
 # 计算
 solution = minimize(objective, x0, method='SLSQP',  bounds=bnds, constraints=cons)
 x = solution.x
+y=solution.x
 
-print('目标值: ' + str(objective(x)))
+print('目标值: ' + str(objective(y)))
 print('答案为')
 print('x1 = ' + str(x[0]))
 print('x2 = ' + str(x[1]))

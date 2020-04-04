@@ -5,6 +5,10 @@ import math
 import copy
 from km2 import km
 
+
+
+
+
 class ulpkm:
     def __init__(self,user,region,celllength,B,pb,pk):
         # 预算约束
@@ -20,9 +24,9 @@ class ulpkm:
         self.celllength=celllength
         # 边界设置
         self.b=(0,celllength*math.pow(len(region),1/2))
-        self.bnds=np.zeros(len(user))
+        self.bnds=np.zeros(len(user),dtype=tuple)
         # 约束条件个数
-        self.cons=np.zeros(len(user)+1,dtype=dict)
+        # self.cons=np.zeros(len(user)+1,dtype=dict)
         self.pB=pb
         self.k=pk
 
@@ -35,25 +39,26 @@ class ulpkm:
 
     #     设置边界
         for i in range (len(user)):
-            self.bnds=self.b
+            self.bnds[i]=self.b
     # 设置初始值，初始值为每个用户终点的位置
+
         for i in range (len(user)):
             self.x0[2*i]=self.user[i][2]
             self.x0[2*i+1]=self.user[i][3]
-        for i in range (len(user)):
-            self.x[2*i]=self.user[i][2]
-            self.x[2*i+1]=self.user[i][3]
+        # for i in range (len(user)):
+        #     self.x[2*i]=self.user[i][2]
+        #     self.x[2*i+1]=self.user[i][3]
 
     # 目标函数
-    def objective(self):
+    def objective(self,x):
         temp=0
         for i in range (len(self.kmuser)):
             if(self.kmuser[i][5]!=-1 and self.kmuser[i][6]!=-1):
-                temp+=math.pow(self.x[2*i]-self.kmuser[i][5],2)+math.pow(self.x[2*i+1]-self.kmuser[i][6],2)
-        return lambda x: temp
+                temp+=math.pow(x[2*i]-self.kmuser[i][5],2)+math.pow(x[2*i+1]-self.kmuser[i][6],2)
+        return temp
 
     #     约束条件0:满足预算约束限制
-    def constraint(self):
+    def constraint(self,x):
         temp=0
         print("lalala")
         for i in range (len(self.kmuser)):
@@ -62,9 +67,9 @@ class ulpkm:
                 lslarr = math.sqrt(math.pow((self.user[i][0] - self.user[i][2]), 2) + math.pow(
                     (self.user[i][1] - self.user[i][3]), 2))  # 起点到终点
                 lslact = math.sqrt(
-                    math.pow((self.user[i][0] - self.x[2*i]), 2) + math.pow((self.user[i][1] - self.x[2*i+1]), 2))  # 起点到实际位置
+                    math.pow((self.user[i][0] - x[2*i]), 2) + math.pow((self.user[i][1] - x[2*i+1]), 2))  # 起点到实际位置
                 larrlact = math.sqrt(
-                    math.pow((self.x[2*i] - self.user[i][2]), 2) + math.pow((self.x[2*i+1] - self.user[i][3]), 2))
+                    math.pow((x[2*i] - self.user[i][2]), 2) + math.pow((x[2*i+1] - self.user[i][3]), 2))
                 self.pi[i] = self.pB * (lslact - lslarr) + self.k * (larrlact) * (larrlact)
                 if (self.pi[i] < 0):
                     self.pi[i] = 0
@@ -72,6 +77,19 @@ class ulpkm:
             else:
                 self.pi[i]=0
         return lambda x:-(sum(self.pi)-self.B)
+
+    def const(self):
+        cons = list()
+        print("!!!1", type(self.constraint()))
+        for i in range(len(self.user)):
+            print(i, len(self.user))
+            con = lambda x: -(math.pow(x[2 * i] - self.user[i][2], 2) + math.pow(x[2 * i + 1] - self.user[i][3],
+                                                                                 2) - math.pow(self.user[i][4], 2))
+            print("CON", type(con))
+            cons.append({'type': 'ineq', 'fun': con})
+        cons.append({'type': 'ineq', 'fun': self.constraint()})
+        print("cons:", cons)
+        return cons
     # 用户最大步行约束(0表示第0个用户)
     def constraint0(self):
         return -(math.pow(self.x[0]-self.user[0][2],2)+math.pow(self.x[1]-self.user[0][3],2)-math.pow(self.user[0][4],2))
@@ -98,17 +116,20 @@ class ulpkm:
 
     # 执行函数
     def ulpkm1(self):
+        # self.cons[len(self.user)]={'type': 'ineq', 'fun':self.constraint()}
+        # for i in range (len(self.user)):
+        #     self.cons[i]={'type': 'ineq', 'fun':lambda x: -(math.pow(self.x[2*i]-self.user[i][2],2)+math.pow(self.x[2*i+1]-self.user[i][3],2)-math.pow(self.user[i][4],2))}
+
         self.cons = list()
-        print("!!!1",type(self.constraint()))
-        self.cons.append({'type': 'ineq', 'fun':self.constraint()})
-        for i in range (len(self.user)+1):
+        # print("!!!1",type(self.constraint()))
+        for i in range (len(self.user)):
             print(i,len(self.user))
-            if(i!=len(self.user)):
-                print("i:",i)
-                con = lambda x: -(math.pow(self.x[2*i]-self.user[i][2],2)+math.pow(self.x[2*i+1]-self.user[i][3],2)-math.pow(self.user[i][4],2))
-                print("CON",type(con))
-                self.cons.append({'type': 'ineq', 'fun': con})
+            con = lambda x: -(math.pow(x[2*i]-self.user[i][2],2)+math.pow(x[2*i+1]-self.user[i][3],2)-math.pow(self.user[i][4],2))
+            print("CON",type(con))
+            self.cons.append({'type': 'ineq', 'fun': con})
+        self.cons.append({'type': 'ineq', 'fun': lambda x:self.constraint(x)})
         print("cons:",self.cons)
+
         # con00 = {'type': 'ineq', 'fun':self.constraint()}
         # con0 = {'type': 'ineq', 'fun': self.constraint0()}
         # con1 = {'type': 'ineq', 'fun': self.constraint1()}
@@ -124,16 +145,18 @@ class ulpkm:
         # con=([con00,con0,con1,con2,con3,con4,con5,con6,con7,con8,con9,con10])
         # for i in range(len(self.user)+1):
         #     self.cons[i]=con[i]
-        print("type:",type(self.objective()))
+        # print("type:",type(self.objective()))
         print("cons:",type(self.cons))
 
-        solution = minimize(self.objective(), self.x0, method='SLSQP', bounds=self.bnds, constraints = self.cons)
-        self.x=solution.x
 
-        print(self.x,"\n")
+        solution = minimize(lambda x: self.objective(x), self.x0, method='SLSQP',  constraints = self.cons)
+        x=solution.x
+
+        print(x,"\n")
         print("目标值",self.objective())
 
-User=[[4, 4, 4, 1, 0.9568767390288544, -1, -1], [0, 0, 3, 0, 0.3508448982850835, -1, -1], [2, 1, 2, 4, 0.5086846864053723, -1, -1], [0, 3, 1, 2, 0.4112544710484871, -1, -1]]
+User=[[4, 4, 4, 1, 0.9568767390288544, -1, -1]]
+# User=[[4, 4, 4, 1, 0.9568767390288544, -1, -1], [0, 0, 3, 0, 0.3508448982850835, -1, -1], [2, 1, 2, 4, 0.5086846864053723, -1, -1], [0, 3, 1, 2, 0.4112544710484871, -1, -1]]
 Region=[[0, 2, 6, 1.0, 1.0], [0, 1, 10, 3.0, 1.0], [0, 1, 3, 1.0, 3.0], [0, 2, 9, 3.0, 3.0]]
 test1=ulpkm(user=User,region=Region,celllength=2,B=0.9,pb=1,pk=2)
 test1.ulpkm1()
