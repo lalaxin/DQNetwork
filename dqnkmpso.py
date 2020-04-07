@@ -602,7 +602,7 @@ def run_this():
 
 
                     # done = True  # 若RB<0，预算算完，则之后的状态的d直接根据用户的目的地及需求点算
-
+                # reward是不是计算错了怎么可能这么大
                 r = -tempfit
             # 更新reward，即粒子群算法计算出来的d(d是最小化，reward是最大化)
             sum_r+=r
