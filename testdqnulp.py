@@ -254,28 +254,53 @@ def run_this():
 
             action = dqn.choose_action(s)
             RB_t=(action/N_ACTIONS)*s[regionnum]
+            print("usert",user[t])
+            # 进行判定，user[t]和sumlackbike都不能为0
 
-            ulp1 = ulpkm(user=user[t], region=region, pB=1, k=2, B=RB_t)
-            tempuser,tempfit=ulp1.run()
-            # tempuser为各个用户的终点，tempfit为最小d
+            sumlackbike=0
+            for i in range(len(region)):
+                if (region[i][2] > 0):
+                    sumlackbike += region[i][2]
+            if(sumlackbike==0):
+                r=0
+                for i in range (len(user[t])):
+                    if (user[t][i][2] == cell * celllength):
+                        tempb = int(user[t][i][3] / celllength) * cell + int(user[t][i][2] / celllength) - 1
+                    elif (user[t][i][3] == cell * celllength):
+                        tempb=int(user[t][i][3] / celllength) * cell + int(user[t][i][2] / celllength) - cell
+                    elif (user[t][i][2] == cell * celllength and user[t][i][3] == cell * celllength):
+                        tempb = cell * cell - 1
+                    else:
+                        tempb = int(user[t][i][3] / celllength) * cell + int(user[t][i][2]/ celllength)
+                # print(a)
+                    if (tempb <= cell * cell):
+                        s_[tempb]+=1
 
-            # 判断用户还车的区域来更新状态
-            for i in range (len(user[t])):
-                if (tempuser[2*i] == cell * celllength):
-                    tempb = int(tempuser[2*i+1] / celllength) * cell + int(tempuser[2*i] / celllength) - 1
-                elif (tempuser[2*i+1] == cell * celllength):
-                    tempb=int(tempuser[2*i+1] / celllength) * cell + int(tempuser[2*i] / celllength) - cell
-                elif (tempuser[2*i] == cell * celllength and tempuser[2*i+1] == cell * celllength):
-                    tempb = cell * cell - 1
-                else:
-                    tempb = int(tempuser[2*i+1] / celllength) * cell + int(tempuser[2*i] / celllength)
-            # print(a)
-                if (tempb <= cell * cell):
-                    s_[tempb]+=1
+
+
+            if (len(user[t]) != 0 and sumlackbike!=0):
+                ulp1 = ulpkm(user=user[t], region=region, pB=1, k=2, B=RB_t)
+                tempuser,tempfit=ulp1.run()
+                # tempuser为各个用户的终点，tempfit为最小d
+
+                # 判断用户还车的区域来更新状态
+                for i in range (len(user[t])):
+                    if (tempuser[2*i] == cell * celllength):
+                        tempb = int(tempuser[2*i+1] / celllength) * cell + int(tempuser[2*i] / celllength) - 1
+                    elif (tempuser[2*i+1] == cell * celllength):
+                        tempb=int(tempuser[2*i+1] / celllength) * cell + int(tempuser[2*i] / celllength) - cell
+                    elif (tempuser[2*i] == cell * celllength and tempuser[2*i+1] == cell * celllength):
+                        tempb = cell * cell - 1
+                    else:
+                        tempb = int(tempuser[2*i+1] / celllength) * cell + int(tempuser[2*i] / celllength)
+                # print(a)
+                    if (tempb <= cell * cell):
+                        s_[tempb]+=1
+                r = -tempfit
             s_[regionnum]-=RB_t
             print("消耗的预算",RB_t)
             # 当前时间段的reward
-            r = -tempfit
+
             # 计算当前T个时间段的总reward
             sum_r+=r
             dqn.store_transition(s,action,r,s_)

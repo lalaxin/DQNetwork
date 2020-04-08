@@ -55,6 +55,9 @@ class km():
             self.adj_matrix=np.transpose(self.adj_matrix)
 
         # print(self.adj_matrix)
+        print("sumlackbike",self.sumlackbike)
+        # 有可能出现usernum或sumlackbike为0的情况
+
 
         self.label_left=np.max(self.adj_matrix,axis=1) # 取大函数，axis=1表示横向
         self.label_right=np.zeros(max(self.usernum,self.sumlackbike))
