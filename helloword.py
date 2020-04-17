@@ -43,12 +43,13 @@ print(User)
 def regionlackbike(region,user):
     a=100000
     for i in range(usernum):
-        if(user[i][0]==cell*celllength):
+        if (user[i][0] == cell * celllength & user[i][1] == cell * celllength):
+            a = cellnum - 1
+        elif(user[i][0]==cell*celllength):
             a=int(user[i][1]/celllength)*cell+int(user[i][0]/celllength)-1
         elif(user[i][1]==cell*celllength):
             a=int(user[i][1] / celllength) * cell + int(user[i][0] / celllength)-cell
-        elif(user[i][0]==cell*celllength & user[i][1]==cell*celllength):
-            a=cellnum-1
+
         else:
             a=int(user[i][1]/celllength)*cell+int(user[i][0]/celllength)
         # print(a)

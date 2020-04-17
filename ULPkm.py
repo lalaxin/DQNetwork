@@ -6,7 +6,9 @@ import copy
 from km2 import km
 
 class ulpkm:
-    def __init__(self,user,region,pB,k,B):
+    def __init__(self,user,region,pB,k,B,cell,celllength):
+        self.cell=cell
+        self.cellltngth=celllength
         self.user=user
         self.region=region
         self.pB=pB
@@ -56,7 +58,7 @@ class ulpkm:
         for i in range(len(self.user)):
             x0.append(self.user[i][2])
             x0.append(self.user[i][3])
-        bnds = [[0, 4] for x in x0]
+        bnds = [[0,self.cell*self.cellltngth ] for x in x0]
 
         solution = minimize(self.objective, x0, method='SLSQP', bounds=bnds, constraints=cons)
         x = solution.x
@@ -68,11 +70,11 @@ class ulpkm:
         return x,self.objective(x)
 
 
-user=[[4, 4, 4, 1, 0.9568767390288544, -1, -1], [0, 0, 3, 0, 0.3508448982850835, -1, -1], [2, 1, 2, 4, 0.5086846864053723, -1, -1], [0, 3, 1, 2, 0.4112544710484871, -1, -1],[2, 1, 2, 0, 0.7062465057950914, -1, -1], [4, 4, 2, 1, 0.40560560060411144, -1, -1]]
-Region=[[0, 2, 6, 1.0, 1.0], [0, 1, 10, 3.0, 1.0], [0, 1, 3, 1.0, 3.0], [0, 2, 9, 3.0, 3.0]]
-ulp1=ulpkm(user=user,region=Region,pB=1,k=2,B=20)
-x,y=ulp1.run()
-print(x)
-print(y)
+# user=[[4, 4, 4, 1, 0.9568767390288544, -1, -1], [0, 0, 3, 0, 0.3508448982850835, -1, -1], [2, 1, 2, 4, 0.5086846864053723, -1, -1], [0, 3, 1, 2, 0.4112544710484871, -1, -1],[2, 1, 2, 0, 0.7062465057950914, -1, -1], [4, 4, 2, 1, 0.40560560060411144, -1, -1]]
+# Region=[[0, 2, 6, 1.0, 1.0], [0, 1, 10, 3.0, 1.0], [0, 1, 3, 1.0, 3.0], [0, 2, 9, 3.0, 3.0]]
+# ulp1=ulpkm(user=user,region=Region,pB=1,k=2,B=20)
+# x,y=ulp1.run()
+# print(x)
+# print(y)
 
 

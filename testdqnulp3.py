@@ -24,28 +24,28 @@ import time
 # import gym
 from torch.autograd import Variable
 
-random.seed(1)
+random.seed(2)
 
 # Hyper Parameters
 BATCH_SIZE = 32
-LR = 0.5                   # learning rate
+LR = 0.01              # learning rate
 EPSILON = 0.9               # greedy policy
-GAMMA = 0.5                 # reward discount
-TARGET_REPLACE_ITER = 100   # target update frequency
-MEMORY_CAPACITY = 2000
+GAMMA = 0.9                 # reward discount
+TARGET_REPLACE_ITER = 70   # target update frequency
+MEMORY_CAPACITY = 20000
 
 # 参数设置
-T=20 #时间时段
-RB=20  #预算约束
+T=5 #时间时段
+RB=10  #预算约束
 # 横向网格数
-cell=2
+cell=4
 # 纵向网格数
 # ycell=2
 # 单个网格长度
 celllength=3
 regionnum=cell*cell #区域个数
 pricek=2
-usernum=10 #用户数为10
+usernum=20 #用户数为10
 
 # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
 init_region = list()
@@ -61,24 +61,25 @@ def init_user_demand():
     userdemand=[[[0]for i in range (usernum)] for t in range (T)]
     for t in range (T):
         for i in range (usernum):
-            userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.uniform(0,celllength/2),-1,-1]
+            userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.uniform(0,celllength),-1,-1]
     return userdemand
 # 初始化状态，直接根据region来初始化状态
 def init_state():
     #状态应包含这一时间段每个区域的（第二个regionnum）用户数，(第1个regionnum)车的供应数以及下一阶段该区域的缺车数（第三个regionnum）
-    s=[0 for i in range (regionnum+1)]
+    s=[0 for i in range (3*regionnum+1)]
     for i in range (regionnum):
         s[i]=init_region[i][1] #第i个区域的车的供应量
-    s[regionnum]=RB
+    s[3*regionnum]=RB
     return s
 # 输入状态值，输出所有的动作值（根据强化学习的方法选取动作）
 # 更新神经网络参数
 
 # 神经网络输出的action的个数（对于每一个用户而言，有多少个用户输出多少个action） 输出的action包含所有的用户的动作，是一个集合，（动作就是用户到达的区域）
 # 从剩余预算中选取一个预算作为当前时段的钱
+sum_loss=[]
 N_ACTIONS = 100
 # 接收的observation维度
-N_STATES = regionnum+1
+N_STATES = 3*regionnum+1
 class Net(nn.Module):
     # 定义卷积层
     def __init__(self, ):
@@ -171,6 +172,8 @@ class DQN(object):
 
         # 计算神经网络的损失
         loss = self.loss_func(q_eval, q_target)
+        sum_loss.append(loss)
+        print("损失",loss)
         # 清空优化器里的梯度信息
         self.optimizer.zero_grad()
         # 误差反向传播
@@ -184,64 +187,90 @@ def run_this():
     print('\nCollecting experience...')
     # run this
     sumreward=[]
+    init_user = init_user_demand()
+    init_s=init_state()
     for i_episode in range(1000):
         # 初始化环境
         r=0
         sum_r=0
         # done=False
         # 初始化状态以及下一时间段的状态
-        s = init_state()
+        user = copy.deepcopy(init_user)
+        region = copy.deepcopy(init_region)
+        s = copy.deepcopy(init_s)
         s_=copy.deepcopy(s)
-        init_user = init_user_demand()
-        user=copy.deepcopy(init_user)
-        region=copy.deepcopy(init_region)
+        s0=copy.deepcopy(s)
         removeuser=list()
         for t in range (T):
             # 清空removeuser
-            del removeuser[:]
-
             # 生成region
             if(t!=T-1):
                 # 先判断当前时段用户所在的区域以及此时区域内车的数量
                 for i in range(regionnum):
                     region[i][1]=s[i]
                     region[i][0]=0
+                    s[regionnum+i]=0
+                    s[2*regionnum+i]=0
+                    s_[regionnum + i] = 0
+                    s_[2 * regionnum + i] = 0
 
 
                 # 判断每个用户在哪骑车，并更新一下状态（区域内车辆数-1）
+                # nub=nu=len(user[t])
+                # print(user[t])
+                puser=copy.deepcopy(user[t])
                 for i in range(len(user[t])):
-                    if (user[t][i][0] == cell * celllength):
-                        tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength) - 1
+                    if (user[t][i][0] == cell * celllength and user[t][i][1] == cell * celllength):
+                        tempa =int(cell*cell - 1)
+                    elif (user[t][i][0] == cell * celllength):
+                        tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength)-1
                     elif (user[t][i][1] == cell * celllength):
                         tempa=int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength) - cell
-                    elif (user[t][i][0] == cell * celllength & user[t][i][1] == cell * celllength):
-                        tempa =int(cell*cell - 1)
                     else:
                         tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength)
                     # print(a)
-                    if (tempa <= cell*cell):
-                        # 若当前阶段用户数大于区域内的车辆数，则用户会离开,直接在数组里面remove即可
+                    if (tempa <cell*cell):
+                        s[regionnum + tempa] += 1
                         if(region[tempa][1]<=0):
                             # 将多余的用户存于数组中，循环结束后再删除
-                            removeuser.append(user[t][i])
+                            # # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),注意考虑边界区域
+                            if(tempa%cell!=0 and region[tempa-1][1]>0 ):
+                                region[tempa-1][1] -= 1
+                                s_[tempa-1] -= 1
+                                user[t][i][0]-=celllength
+                            elif (tempa%cell!=cell-1 and region[tempa + 1][1] > 0 ):
+                                region[tempa +1][1] -= 1
+                                s_[tempa + 1] -= 1
+                                user[t][i][0] += celllength
+                            elif (tempa>cell-1 and region[tempa - cell] [1]> 0  ):
+                                region[tempa - cell][1] -= 1
+                                s_[tempa - cell] -= 1
+                                user[t][i][1] -= celllength
+                            elif ( tempa<cell*(cell-1) and region[tempa + cell] [1]> 0 ):
+                                region[tempa +cell][1] -= 1
+                                s_[tempa +cell] -= 1
+                                user[t][i][1] += celllength
+                            else:
+                                removeuser.append(user[t][i])
                         else:
-
                             region[tempa][1]-=1
                             s_[tempa]-=1
 
+
                 for i in range(len(removeuser)):
-                    # 并且每一个离开的用户的reward设为-整个区域的大的对角线
+                    # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车)
                     user[t].remove(removeuser[i])
                     # r+=-celllength*cell*math.sqrt(2)
+                nu = len(user[t])
 
                 #计算下一时刻的缺车区域（这一时间段的用户还未还车，但是已取车）
                 for i in range(len(user[t+1])):
-                    if (user[t+1][i][0] == cell * celllength):
+                    if (user[t+1][i][0] == cell * celllength and user[t+1][i][1] == cell * celllength):
+                        tempaa =int(cell*cell - 1)
+                    elif (user[t+1][i][0] == cell * celllength):
                         tempaa = int(user[t+1][i][1] / celllength) * cell + int(user[t+1][i][0] / celllength) - 1
                     elif (user[t+1][i][1] == cell * celllength):
                         tempaa=int(user[t+1][i][1] / celllength) * cell + int(user[t+1][i][0] / celllength) - cell
-                    elif (user[t+1][i][0] == cell * celllength & user[t+1][i][1] == cell * celllength):
-                        tempaa =int(cell*cell - 1)
                     else:
                         tempaa = int(user[t+1][i][1] / celllength) * cell + int(user[t+1][i][0] / celllength)
                     # print(a)
@@ -253,14 +282,25 @@ def run_this():
                 for i in range(regionnum):
                     if(region[i][0] - region[i][1]>0):
                         region[i][2] = region[i][0] - region[i][1]
-
+                        s[2*regionnum+i]=region[i][2]
                     else:
                         region[i][2] =0
             #     获得下一阶段的缺车数
 
+            if(t!=0):
+                dqn.store_transition(s0, action, r, s)
+
+                # s首先需要存储记忆，记忆库中有一些东西之后才能学习（前200步都是在存储记忆,大于200之后每5步学习一次）
+                if dqn.memory_counter > MEMORY_CAPACITY :
+                    dqn.learn()
+                r=0
+                balancer=0
+                lackr=0
+
             action = dqn.choose_action(s)
-            RB_t=(action/N_ACTIONS)*s[regionnum]
-            print("usert",len(user[t]),user[t])
+            RB_t=(action/N_ACTIONS)*s[3*regionnum]
+
+            # print("usert",len(user[t]),user[t])
             # 进行判定，user[t]和sumlackbike都不能为0
 
             sumlackbike=0
@@ -270,12 +310,12 @@ def run_this():
             if(sumlackbike==0):
                 r=0
                 for i in range (len(user[t])):
-                    if (user[t][i][2] == cell * celllength):
+                    if (user[t][i][2] == cell * celllength and user[t][i][3] == cell * celllength):
+                        tempb = cell * cell - 1
+                    elif (user[t][i][2] == cell * celllength):
                         tempb = int(user[t][i][3] / celllength) * cell + int(user[t][i][2] / celllength) - 1
                     elif (user[t][i][3] == cell * celllength):
                         tempb=int(user[t][i][3] / celllength) * cell + int(user[t][i][2] / celllength) - cell
-                    elif (user[t][i][2] == cell * celllength and user[t][i][3] == cell * celllength):
-                        tempb = cell * cell - 1
                     else:
                         tempb = int(user[t][i][3] / celllength) * cell + int(user[t][i][2]/ celllength)
                 # print(a)
@@ -283,31 +323,33 @@ def run_this():
                         s_[tempb]+=1
             else:
                 if(sumlackbike>len(user[t])):
-                    r = (-celllength * cell * math.sqrt(2)) * (sumlackbike-len(user[t]))
+                    lackr = (-celllength * cell * math.sqrt(2)) * (sumlackbike-len(user[t]))
                 else:
-                    r=0
+                    lackr=0
                 # 每一个缺车区域的车都有一个-reward
+                # print(len(user[t]))
 
                 if(len(user[t])!=0):
-                    ulp1 = ulpkm(user=user[t], region=region, pB=1, k=2, B=RB_t)
+                    ulp1 = ulpkm(user=user[t], region=region, pB=1, k=2, B=RB_t,cell=cell,celllength=celllength)
                     tempuser, tempfit = ulp1.run()
                     # tempuser为各个用户的终点，tempfit为最小d
 
                     # 判断用户还车的区域来更新状态
                     for i in range(len(user[t])):
-                        if (tempuser[2 * i] == cell * celllength):
+                        if (tempuser[2 * i] == cell * celllength and tempuser[2 * i + 1] == cell * celllength):
+                            tempb = cell * cell - 1
+                        elif (tempuser[2 * i] == cell * celllength):
                             tempb = int(tempuser[2 * i + 1] / celllength) * cell + int(tempuser[2 * i] / celllength) - 1
                         elif (tempuser[2 * i + 1] == cell * celllength):
                             tempb = int(tempuser[2 * i + 1] / celllength) * cell + int(
                                 tempuser[2 * i] / celllength) - cell
-                        elif (tempuser[2 * i] == cell * celllength and tempuser[2 * i + 1] == cell * celllength):
-                            tempb = cell * cell - 1
                         else:
                             tempb = int(tempuser[2 * i + 1] / celllength) * cell + int(tempuser[2 * i] / celllength)
                         # print(a)
                         if (tempb <= cell * cell):
                             s_[tempb] += 1
-                    r += -tempfit
+                    balancer = -tempfit
+                r=balancer+lackr
             # if (len(user[t]) != 0 and sumlackbike!=0):
             #     ulp1 = ulpkm(user=user[t], region=region, pB=1, k=2, B=RB_t)
             #     tempuser,tempfit=ulp1.run()
@@ -327,21 +369,22 @@ def run_this():
             #         if (tempb <= cell * cell):
             #             s_[tempb]+=1
             #     r = -tempfit
-            s_[regionnum]-=RB_t
-            print("消耗的预算",RB_t)
+            s_[3*regionnum]-=RB_t
+            # print("消耗的预算",RB_t)
             # 当前时间段的reward
 
             # 计算当前T个时间段的总reward
             sum_r+=r
-            dqn.store_transition(s,action,r,s_)
-
-            # s首先需要存储记忆，记忆库中有一些东西之后才能学习（前200步都是在存储记忆,大于200之后每5步学习一次）
-            if dqn.memory_counter > MEMORY_CAPACITY and dqn.memory_counter%5==0:
-                dqn.learn()
-                # if done:
-                #     print('Ep: ', i_episode, '| Ep_r: ', round(ep_r, 2))
-
-            s = s_
+            del removeuser[:]
+            # dqn.store_transition(s,action,r,s_)
+            #
+            # # s首先需要存储记忆，记忆库中有一些东西之后才能学习（前200步都是在存储记忆,大于200之后每5步学习一次）
+            # if dqn.memory_counter > MEMORY_CAPACITY and dqn.memory_counter%5==0:
+            #     dqn.learn()
+            #     # if done:
+            #     #     print('Ep: ', i_episode, '| Ep_r: ', round(ep_r, 2))
+            s0=copy.deepcopy(s)
+            s = copy.deepcopy(s_)
             print("第t时的奖励",RB_t,t,r)
         print("这一代的总奖励",sum_r)
         sumreward.append(sum_r)
@@ -353,8 +396,30 @@ def run_this():
     t = np.array([t for t in range(0, 1000)])  # 迭代次数
     plt.plot(0, 3, color='g')
     fitness1 = np.array(sumreward)
+    # fitness2=np.array(sum_loss)
     plt.plot(t, fitness1, label="greedy", color='b', linewidth=1)
+    # plt.plot(t, fitness2, label="loss", color='r', linewidth=1)
     plt.show()
+
+def plotLearning(scores, filename, x=None, window=5):
+    print("------------------------Saving Picture--------------------------------")
+    N = len(scores)
+    running_avg = np.empty(N)
+
+    for t in range(N):
+        running_avg[t] = np.mean(scores[max(0, t-window):(t+1)])
+
+    if x is None:
+        x = [i for i in range(N)]
+
+    plt.ylabel('Score')
+    plt.xlabel('Game')
+    plt.plot(x, running_avg)
+
+    plt.legend(labels=['DQN'])
+
+    plt.savefig(filename)
+
 
 
 
