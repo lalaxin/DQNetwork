@@ -24,18 +24,18 @@ import time
 # import gym
 from torch.autograd import Variable
 
-random.seed(2)
+random.seed(1)
 
 # Hyper Parameters
 BATCH_SIZE = 32
-LR = 0.01              # learning rate
+LR = 0.09              # learning rate
 EPSILON = 0.9               # greedy policy
 GAMMA = 0.9                 # reward discount
 TARGET_REPLACE_ITER = 70   # target update frequency
-MEMORY_CAPACITY = 20000
+MEMORY_CAPACITY = 10000
 
 # 参数设置
-T=5 #时间时段
+T=10 #时间时段
 RB=10  #预算约束
 # 横向网格数
 cell=4
@@ -55,7 +55,7 @@ for i in range(regionnum):
     # print(r)
     init_region.append(regionn)
     # print(region)
-
+print("initregion",init_region)
 # 用户需求,T个时间段的用户需求# 定义用户数组（起点横坐标，起点纵坐标，终点横坐标，终点纵坐标，最大步行距离,期望停车区域横坐标，期望停车区域纵坐标）
 def init_user_demand():
     userdemand=[[[0]for i in range (usernum)] for t in range (T)]
@@ -261,6 +261,10 @@ def run_this():
                     # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车)
                     user[t].remove(removeuser[i])
                     # r+=-celllength*cell*math.sqrt(2)
+                #拿到车的用户调度之前的r(根据用户到缺车区域,给用户匹配还车点)
+
+
+
                 nu = len(user[t])
 
                 #计算下一时刻的缺车区域（这一时间段的用户还未还车，但是已取车）
@@ -286,7 +290,15 @@ def run_this():
                     else:
                         region[i][2] =0
             #     获得下一阶段的缺车数
-
+            preuser = copy.deepcopy(user[t])
+            preregion = copy.deepcopy(region)
+            psokm = km(region=preregion, user=preuser)
+            psokm.build_graph()
+            preuser = psokm.KM()
+            prer = 0
+            for i in range(len(preuser)):
+                if (preuser[i][5] != -1 and preuser[i][6] != -1):
+                    prer += math.pow(preuser[i][2] - preuser[i][5], 2) + math.pow(preuser[i][3] - preuser[i][6], 2)
             if(t!=0):
                 dqn.store_transition(s0, action, r, s)
 
@@ -300,7 +312,7 @@ def run_this():
             action = dqn.choose_action(s)
             RB_t=(action/N_ACTIONS)*s[3*regionnum]
 
-            # print("usert",len(user[t]),user[t])
+            print("usert",len(user[t]),user[t])
             # 进行判定，user[t]和sumlackbike都不能为0
 
             sumlackbike=0
@@ -348,8 +360,8 @@ def run_this():
                         # print(a)
                         if (tempb <= cell * cell):
                             s_[tempb] += 1
-                    balancer = -tempfit
-                r=balancer+lackr
+                    balancer = tempfit
+                r=prer-balancer
             # if (len(user[t]) != 0 and sumlackbike!=0):
             #     ulp1 = ulpkm(user=user[t], region=region, pB=1, k=2, B=RB_t)
             #     tempuser,tempfit=ulp1.run()
