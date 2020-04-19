@@ -55,7 +55,7 @@ class km():
             self.adj_matrix=np.transpose(self.adj_matrix)
 
         # print(self.adj_matrix)
-        print("sumlackbike",self.sumlackbike)
+        # print("sumlackbike",self.sumlackbike)
         # 有可能出现usernum或sumlackbike为0的情况
 
 

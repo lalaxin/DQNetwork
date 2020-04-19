@@ -28,10 +28,10 @@ random.seed(1)
 
 # Hyper Parameters
 BATCH_SIZE = 32
-LR = 0.09              # learning rate
+LR = 0.001              # learning rate
 EPSILON = 0.9               # greedy policy
 GAMMA = 0.9                 # reward discount
-TARGET_REPLACE_ITER = 70   # target update frequency
+TARGET_REPLACE_ITER = 20   # target update frequency
 MEMORY_CAPACITY = 10000
 
 # 参数设置
@@ -51,7 +51,7 @@ usernum=20 #用户数为10
 init_region = list()
 for i in range(regionnum):
     # print(i)
-    regionn =[0,random.randint(0,5),0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
+    regionn =[0,random.randint(0,2),0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
     # print(r)
     init_region.append(regionn)
     # print(region)
@@ -189,7 +189,7 @@ def run_this():
     sumreward=[]
     init_user = init_user_demand()
     init_s=init_state()
-    for i_episode in range(1000):
+    for i_episode in range(200):
         # 初始化环境
         r=0
         sum_r=0
@@ -319,6 +319,7 @@ def run_this():
             for i in range(len(region)):
                 if (region[i][2] > 0):
                     sumlackbike += region[i][2]
+            print("sumlackbike",sumlackbike)
             if(sumlackbike==0):
                 r=0
                 for i in range (len(user[t])):
@@ -405,7 +406,7 @@ def run_this():
     plt.figure(1)
     plt.xlabel("iterators", size=14)
     plt.ylabel("reward", size=14)
-    t = np.array([t for t in range(0, 1000)])  # 迭代次数
+    t = np.array([t for t in range(0, 200)])  # 迭代次数
     plt.plot(0, 3, color='g')
     fitness1 = np.array(sumreward)
     # fitness2=np.array(sum_loss)
