@@ -28,15 +28,15 @@ random.seed(1)
 
 # Hyper Parameters
 BATCH_SIZE = 32
-LR = 0.001              # learning rate
+LR = 0.0002              # learning rate
 EPSILON = 0.9               # greedy policy
 GAMMA = 0.9                 # reward discount
-TARGET_REPLACE_ITER = 20   # target update frequency
-MEMORY_CAPACITY = 10000
+TARGET_REPLACE_ITER = 30   # target update frequency
+MEMORY_CAPACITY = 5000
 
 # 参数设置
 T=10 #时间时段
-RB=10  #预算约束
+RB=100 #预算约束
 # 横向网格数
 cell=4
 # 纵向网格数
@@ -44,14 +44,14 @@ cell=4
 # 单个网格长度
 celllength=3
 regionnum=cell*cell #区域个数
-pricek=2
-usernum=20 #用户数为10
+
+usernum=2 #用户数为10
 
 # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
 init_region = list()
 for i in range(regionnum):
     # print(i)
-    regionn =[0,random.randint(0,2),0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
+    regionn =[0,random.randint(0,1),0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
     # print(r)
     init_region.append(regionn)
     # print(region)
@@ -189,7 +189,7 @@ def run_this():
     sumreward=[]
     init_user = init_user_demand()
     init_s=init_state()
-    for i_episode in range(200):
+    for i_episode in range(1500):
         # 初始化环境
         r=0
         sum_r=0
@@ -343,7 +343,7 @@ def run_this():
                 # print(len(user[t]))
 
                 if(len(user[t])!=0):
-                    ulp1 = ulpkm(user=user[t], region=region, pB=1, k=2, B=RB_t,cell=cell,celllength=celllength)
+                    ulp1 = ulpkm(user=user[t], region=region, pB=1, k=100, B=RB_t,cell=cell,celllength=celllength)
                     tempuser, tempfit = ulp1.run()
                     # tempuser为各个用户的终点，tempfit为最小d
 
@@ -406,7 +406,7 @@ def run_this():
     plt.figure(1)
     plt.xlabel("iterators", size=14)
     plt.ylabel("reward", size=14)
-    t = np.array([t for t in range(0, 200)])  # 迭代次数
+    t = np.array([t for t in range(0, 1500)])  # 迭代次数
     plt.plot(0, 3, color='g')
     fitness1 = np.array(sumreward)
     # fitness2=np.array(sum_loss)

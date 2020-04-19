@@ -144,6 +144,7 @@ class km():
                     distance+=self.adj[t][int(weight)][4]
                     self.user[t][5]=self.adj[t][int(weight)][2]
                     self.user[t][6]=self.adj[t][int(weight)][3]
+
         # print("kmdistance",distance)
         return self.user
             # 求出所有的匹配的t好感度之和
