@@ -28,24 +28,24 @@ random.seed(1)
 
 # Hyper Parameters
 BATCH_SIZE = 32
-LR = 0.09              # learning rate
+LR = 0.001            # learning rate
 EPSILON = 0.9               # greedy policy
 GAMMA = 0.5                 # reward discount
-TARGET_REPLACE_ITER = 10   # target update frequency
-MEMORY_CAPACITY = 200
+TARGET_REPLACE_ITER = 100   # target update frequency
+MEMORY_CAPACITY = 2000
 
 # 参数设置
 T=20 #时间时段
-RB=20  #预算约束
+RB=1000  #预算约束
 # 横向网格数
-cell=2
+cell=4
 # 纵向网格数
 # ycell=2
 # 单个网格长度
 celllength=3
 regionnum=cell*cell #区域个数
-pricek=2
-usernum=10 #用户数为10
+# pricek=2
+usernum=2#用户数为10
 
 # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
 init_region = list()
@@ -271,7 +271,7 @@ def run_this():
                 dqn.store_transition(s0, action, r, s)
 
                 # s首先需要存储记忆，记忆库中有一些东西之后才能学习（前200步都是在存储记忆,大于200之后每5步学习一次）
-                if dqn.memory_counter > MEMORY_CAPACITY and dqn.memory_counter % 5 == 0:
+                if dqn.memory_counter > MEMORY_CAPACITY:
                     dqn.learn()
                 r=0
 
@@ -285,6 +285,7 @@ def run_this():
             for i in range(len(region)):
                 if (region[i][2] > 0):
                     sumlackbike += region[i][2]
+            print("sunlackbike,action",sumlackbike,action)
             if(sumlackbike==0):
                 r=0
                 for i in range (len(user[t])):
@@ -308,7 +309,7 @@ def run_this():
                 # print(len(user[t]))
 
                 if(len(user[t])!=0):
-                    ulp1 = ulpkm(user=user[t], region=region, pB=1, k=2, B=RB_t,cell=cell,celllength=celllength)
+                    ulp1 = ulpkm(user=user[t], region=region, pB=1, k=50, B=RB_t,cell=cell,celllength=celllength)
                     tempuser, tempfit = ulp1.run()
                     # tempuser为各个用户的终点，tempfit为最小d
 
@@ -327,7 +328,7 @@ def run_this():
                         if (tempb <= cell * cell):
                             s_[tempb] += 1
                     balancer = -tempfit
-                r=balancer+1/20*lackr
+                r=balancer+lackr
             # if (len(user[t]) != 0 and sumlackbike!=0):
             #     ulp1 = ulpkm(user=user[t], region=region, pB=1, k=2, B=RB_t)
             #     tempuser,tempfit=ulp1.run()

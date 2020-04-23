@@ -33,18 +33,17 @@ EPSILON = 0               # greedy policy
 TEMP=0.9
 GAMMA = 0.99                 # reward discount
 TARGET_REPLACE_ITER = 30   # target update frequency
-MEMORY_CAPACITY = 8000
+MEMORY_CAPACITY =2000
 
 # 参数设置
 T=10 #时间时段
 RB=500 #预算约束
 # 横向网格数
 cell=4
-# 纵向网格数
-# ycell=2
 # 单个网格长度
 celllength=3
 regionnum=cell*cell #区域个数
+EPISODE=700 #迭代次数
 
 usernum=4 #用户数为10
 
@@ -79,7 +78,7 @@ def init_state():
 # 从剩余预算中选取一个预算作为当前时段的钱
 sum_loss=[]
 N_ACTIONS = 100
-# 接收的observation维度
+# 接收的observation维度(区域当前供应，区域当前用户数，上个阶段每个区域到达的用户数，预算约束)
 N_STATES = 3*regionnum+1
 class Net(nn.Module):
     # 定义卷积层
@@ -196,7 +195,7 @@ def run_this():
     sumreward=[]
     init_user = init_user_demand()
     init_s=init_state()
-    for i_episode in range(1500):
+    for i_episode in range(EPISODE):
         # 初始化环境
         r=0
         sum_r=0
@@ -210,214 +209,108 @@ def run_this():
         removeuser=list()
 
         for t in range (T):
-            # 清空removeuser
-            # 生成region
-            if(t!=T-1):
-                # 先重新初始化状态
-                for i in range(regionnum):
-                    region[i][1]=s[i]
-                    region[i][0]=0
-                    s[regionnum+i]=0
-                    s[2*regionnum+i]=0
-                    s_[regionnum + i] = 0
-                    s_[2 * regionnum + i] = 0
+            # 进入下一个时间槽后，将当前状态的用户数以及下一状态的用户还车位置都清0
+            for i in range (regionnum):
+                s[regionnum + i] = 0
+                s_[2 * regionnum + i] = 0
 
-                # 判断每个用户在哪骑车，并更新一下状态（区域内车辆数-1）
-                # nub=nu=len(user[t])
-                # print(user[t])
-                puser=copy.deepcopy(user[t])
-                for i in range(len(user[t])):
-                    if (user[t][i][0] == cell * celllength and user[t][i][1] == cell * celllength):
-                        tempa =int(cell*cell - 1)
-                    elif (user[t][i][0] == cell * celllength):
-                        tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength)-1
-                    elif (user[t][i][1] == cell * celllength):
-                        tempa=int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength) - cell
+            # 判断用户的初始骑车区域，同时并更新状态
+            for i in range(len(user[t])):
+                if (user[t][i][0] == cell * celllength and user[t][i][1] == cell * celllength):
+                    tempa = int(cell * cell - 1)
+                elif (user[t][i][0] == cell * celllength):
+                    tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength) - 1
+                elif (user[t][i][1] == cell * celllength):
+                    tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength) - cell
+                else:
+                    tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength)
+                # print(a)
+                if (tempa < cell * cell):
+                    s[regionnum + tempa] += 1
+                    if (s[tempa] <= 0):
+                        # 将多余的用户存于数组中，循环结束后再删除
+                        removeuser.append(user[t][i])
                     else:
-                        tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength)
-                    # print(a)
-                    if (tempa <cell*cell):
-                        s[regionnum + tempa] += 1
-                        if(region[tempa][1]<=0):
-                            # 将多余的用户存于数组中，循环结束后再删除
-                            # # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),注意考虑边界区域
-                            if(tempa%cell!=0 and region[tempa-1][1]>0 ):
-                                region[tempa-1][1] -= 1
-                                s_[tempa-1] -= 1
-                                user[t][i][0]-=celllength
-                            elif (tempa%cell!=cell-1 and region[tempa + 1][1] > 0 ):
-                                region[tempa +1][1] -= 1
-                                s_[tempa + 1] -= 1
-                                user[t][i][0] += celllength
-                            elif (tempa>cell-1 and region[tempa - cell] [1]> 0  ):
-                                region[tempa - cell][1] -= 1
-                                s_[tempa - cell] -= 1
-                                user[t][i][1] -= celllength
-                            elif ( tempa<cell*(cell-1) and region[tempa + cell] [1]> 0 ):
-                                region[tempa +cell][1] -= 1
-                                s_[tempa +cell] -= 1
-                                user[t][i][1] += celllength
-                            else:
-                                removeuser.append(user[t][i])
-                        else:
-                            region[tempa][1]-=1
-                            s_[tempa]-=1
-
-
-                for i in range(len(removeuser)):
-                    # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),这一时间段离开的用户算上个时间段的惩罚
-                    user[t].remove(removeuser[i])
-                    r+=-celllength*cell
-                #拿到车的用户调度之前的r(根据用户到缺车区域,给用户匹配还车点)
-
-
-
-                nu = len(user[t])
-
-                #计算下一时刻的缺车区域（这一时间段的用户还未还车，但是已取车）
-                for i in range(len(user[t+1])):
-                    if (user[t+1][i][0] == cell * celllength and user[t+1][i][1] == cell * celllength):
-                        tempaa =int(cell*cell - 1)
-                    elif (user[t+1][i][0] == cell * celllength):
-                        tempaa = int(user[t+1][i][1] / celllength) * cell + int(user[t+1][i][0] / celllength) - 1
-                    elif (user[t+1][i][1] == cell * celllength):
-                        tempaa=int(user[t+1][i][1] / celllength) * cell + int(user[t+1][i][0] / celllength) - cell
-                    else:
-                        tempaa = int(user[t+1][i][1] / celllength) * cell + int(user[t+1][i][0] / celllength)
-                    # print(a)
-                    if (tempaa <= cell*cell):
-                        # 更新下一状态用户数
-                        s_[regionnum+tempaa]+=1
-                        region[tempaa][0]+=1
-                # t+1的缺车数等于t+1的用户数-车辆数
-                for i in range(regionnum):
-                    if(region[i][0] - region[i][1]>0):
-                        region[i][2] = region[i][0] - region[i][1]
-                        s[2*regionnum+i]=region[i][2]
-                    else:
-                        region[i][2] =0
-
-            preuser = copy.deepcopy(user[t])
-            preregion = copy.deepcopy(region)
-            psokm = km(region=preregion, user=preuser)
-            psokm.build_graph()
-            preuser = psokm.KM()
-            prer = 0
-            for i in range(len(preuser)):
-                if (preuser[i][5] != -1 and preuser[i][6] != -1):
-                    prer += math.pow(preuser[i][2] - preuser[i][5], 2) + math.pow(preuser[i][3] - preuser[i][6], 2)
-
-            # r=0表示没有缺车的情况
-            if(t!=0):
+                        s[tempa] -= 1
+            # 下一时刻用户到来后存储用户信息再将状态对存于记忆库中
+            if (t != 0):
                 dqn.store_transition(s0, action, r, s)
-
                 # s首先需要存储记忆，记忆库中有一些东西之后才能学习（前200步都是在存储记忆,大于200之后每5步学习一次）
-                if dqn.memory_counter > MEMORY_CAPACITY :
+                if dqn.memory_counter > MEMORY_CAPACITY:
                     dqn.learn()
                 print("第t时的奖励", RB_t, t, r)
                 sum_r += r
-                r=0
-                balancer=0
-                lackr=0
+            #         将没有骑到车的无效用户移除
+            for i in range(len(removeuser)):
+                # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),这一时间段离开的用户算上个时间段的惩罚
+                user[t].remove(removeuser[i])
+            # 更新region来生成重平衡任务,求得缺车数
+            for i in range (regionnum):
+                region[i][1] = s[i]
+                # 初始平衡状态下的车的数量
+                region[i][0] = init_s[i]
+                if(region[i][0]-region[i][1]>0):
+                    region[i][2]=region[i][0]-region[i][1]
+                else:
+                    region[i][2]=0
 
             action = dqn.choose_action(s)
-            RB_t=(action/N_ACTIONS)*s[3*regionnum]
+            RB_t = (action / N_ACTIONS) * s[3 * regionnum]
 
-            print("usert",len(user[t]),user[t])
-            # 进行判定，user[t]和sumlackbike都不能为0
-
-            sumlackbike=0
+            print("usert", len(user[t]), user[t])
+            # 计算sumlackbike
+            sumlackbike = 0
             for i in range(len(region)):
                 if (region[i][2] > 0):
                     sumlackbike += region[i][2]
-            print("sumlackbike,action,Rb",sumlackbike,action,s[3*regionnum])
-            if(sumlackbike==0):
-                r=0
-                for i in range (len(user[t])):
-                    if (user[t][i][2] == cell * celllength and user[t][i][3] == cell * celllength):
+            print("sumlackbike,action,Rb", sumlackbike, action, s[3 * regionnum])
+            # 执行重平衡任务，来得到用户的还车地点
+            if(user[t]!=0):
+                preuser = copy.deepcopy(user[t])
+                preregion = copy.deepcopy(region)
+                psokm = km(region=preregion, user=preuser)
+                psokm.build_graph()
+                preuser = psokm.KM()
+                prer = 0
+                for i in range(len(preuser)):
+                    if (preuser[i][5] != -1 and preuser[i][6] != -1):
+                        prer += math.pow(preuser[i][2] - preuser[i][5], 2) + math.pow(preuser[i][3] - preuser[i][6], 2)
+
+                ulp1 = ulpkm(user=user[t], region=region, pB=1, k=100, B=RB_t, cell=cell, celllength=celllength)
+                tempuser, tempfit = ulp1.run()
+                # tempuser为各个用户的终点，tempfit为最小d
+                # 判断用户还车的区域来更新状态
+                for i in range(len(user[t])):
+                    if (tempuser[2 * i] == cell * celllength and tempuser[2 * i + 1] == cell * celllength):
                         tempb = cell * cell - 1
-                    elif (user[t][i][2] == cell * celllength):
-                        tempb = int(user[t][i][3] / celllength) * cell + int(user[t][i][2] / celllength) - 1
-                    elif (user[t][i][3] == cell * celllength):
-                        tempb=int(user[t][i][3] / celllength) * cell + int(user[t][i][2] / celllength) - cell
+                    elif (tempuser[2 * i] == cell * celllength):
+                        tempb = int(tempuser[2 * i + 1] / celllength) * cell + int(tempuser[2 * i] / celllength) - 1
+                    elif (tempuser[2 * i + 1] == cell * celllength):
+                        tempb = int(tempuser[2 * i + 1] / celllength) * cell + int(
+                            tempuser[2 * i] / celllength) - cell
                     else:
-                        tempb = int(user[t][i][3] / celllength) * cell + int(user[t][i][2]/ celllength)
-                # print(a)
+                        tempb = int(tempuser[2 * i + 1] / celllength) * cell + int(tempuser[2 * i] / celllength)
+                    # 得到上一阶段的用户还车地点来更新s_
                     if (tempb <= cell * cell):
                         s_[tempb]+=1
+                        s_[2*regionnum+tempb]+=1
+                balancer = tempfit
+                r=prer-balancer
             else:
-                if(sumlackbike>len(user[t])):
-                    lackr = (-celllength * cell * math.sqrt(2)) * (sumlackbike-len(user[t]))
-                else:
-                    lackr=0
-                # 每一个缺车区域的车都有一个-reward
-                # print(len(user[t]))
+                r=0
 
-                if(len(user[t])!=0):
-                    ulp1 = ulpkm(user=user[t], region=region, pB=1, k=100, B=RB_t,cell=cell,celllength=celllength)
-                    tempuser, tempfit = ulp1.run()
-                    # tempuser为各个用户的终点，tempfit为最小d
-
-                    # 判断用户还车的区域来更新状态
-                    for i in range(len(user[t])):
-                        if (tempuser[2 * i] == cell * celllength and tempuser[2 * i + 1] == cell * celllength):
-                            tempb = cell * cell - 1
-                        elif (tempuser[2 * i] == cell * celllength):
-                            tempb = int(tempuser[2 * i + 1] / celllength) * cell + int(tempuser[2 * i] / celllength) - 1
-                        elif (tempuser[2 * i + 1] == cell * celllength):
-                            tempb = int(tempuser[2 * i + 1] / celllength) * cell + int(
-                                tempuser[2 * i] / celllength) - cell
-                        else:
-                            tempb = int(tempuser[2 * i + 1] / celllength) * cell + int(tempuser[2 * i] / celllength)
-                        # print(a)
-                        if (tempb <= cell * cell):
-                            s_[tempb] += 1
-                    balancer = -tempfit
-                r=prer+balancer
-            # if (len(user[t]) != 0 and sumlackbike!=0):
-            #     ulp1 = ulpkm(user=user[t], region=region, pB=1, k=2, B=RB_t)
-            #     tempuser,tempfit=ulp1.run()
-            #     # tempuser为各个用户的终点，tempfit为最小d
-            #
-            #     # 判断用户还车的区域来更新状态
-            #     for i in range (len(user[t])):
-            #         if (tempuser[2*i] == cell * celllength):
-            #             tempb = int(tempuser[2*i+1] / celllength) * cell + int(tempuser[2*i] / celllength) - 1
-            #         elif (tempuser[2*i+1] == cell * celllength):
-            #             tempb=int(tempuser[2*i+1] / celllength) * cell + int(tempuser[2*i] / celllength) - cell
-            #         elif (tempuser[2*i] == cell * celllength and tempuser[2*i+1] == cell * celllength):
-            #             tempb = cell * cell - 1
-            #         else:
-            #             tempb = int(tempuser[2*i+1] / celllength) * cell + int(tempuser[2*i] / celllength)
-            #     # print(a)
-            #         if (tempb <= cell * cell):
-            #             s_[tempb]+=1
-            #     r = -tempfit
             s_[3*regionnum]-=RB_t
-            # print("消耗的预算",RB_t)
-            # 当前时间段的reward
-
             # 计算当前T个时间段的总reward
-
             del removeuser[:]
-            # dqn.store_transition(s,action,r,s_)
-            #
-            # # s首先需要存储记忆，记忆库中有一些东西之后才能学习（前200步都是在存储记忆,大于200之后每5步学习一次）
-            # if dqn.memory_counter > MEMORY_CAPACITY and dqn.memory_counter%5==0:
-            #     dqn.learn()
-            #     # if done:
-            #     #     print('Ep: ', i_episode, '| Ep_r: ', round(ep_r, 2))
             s0=copy.deepcopy(s)
             s = copy.deepcopy(s_)
-
         print("这一代的总奖励",sum_r)
         sumreward.append(sum_r)
-
         print(i_episode)
     plt.figure(1)
     plt.xlabel("iterators", size=14)
     plt.ylabel("reward", size=14)
-    t = np.array([t for t in range(0, 1500)])  # 迭代次数
+    t = np.array([t for t in range(0, EPISODE)])  # 迭代次数
     plt.plot(0, 3, color='g')
     fitness1 = np.array(sumreward)
     # fitness2=np.array(sum_loss)
