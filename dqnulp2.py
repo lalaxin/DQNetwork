@@ -41,7 +41,7 @@ MEMORY_CAPACITY =4000
 T=10 #时间时段
 RB=500#预算约束
 # 横向网格数
-cell=2
+cell=4
 # 单个网格长度
 celllength=3
 regionnum=cell*cell #区域个数
@@ -49,13 +49,13 @@ EPISODE=1500 #迭代次数
 # 记录损失
 loss=[]
 
-usernum=2 #用户数为10
+usernum=10 #用户数为10
 
 # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
 init_region = list()
 for i in range(regionnum):
     # print(i)
-    regionn =[0,random.randint(1,2),0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
+    regionn =[0,random.randint(1,5),0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
     # print(r)
     init_region.append(regionn)
     # print(region)
@@ -250,6 +250,8 @@ def run_this():
                         s[regionnum + tempa] += 1
                         s_[tempa]-=1
                         s[tempa] -= 1
+
+
             # 下一时刻用户到来后存储用户信息再将状态对存于记忆库中
             for i in range(len(removeuser)):
                 # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),这一时间段离开的用户算上个时间段的惩罚
@@ -269,14 +271,16 @@ def run_this():
                     region[i][2]=region[i][0]-region[i][1]
                 else:
                     region[i][2]=0
-                # s[2*regionnum + i]=region[i][2]
+                s[2*regionnum + i]=region[i][2]
             if (t != 0):
+                r = (len(init_user[t])-len(removeuser) )/ len(init_user[t])
                 print("action,RB_t,r", action, RB_t,r)
                 dqn.store_transition(s0, action, r, s)
                 # s首先需要存储记忆，记忆库中有一些东西之后才能学习（前200步都是在存储记忆,大于200之后每5步学习一次）
                 if dqn.memory_counter > MEMORY_CAPACITY:
                     dqn.learn()
                 sum_r += r
+
 
             # print(dqn.eval_net.fc1.weight)
             action = dqn.choose_action(s)
@@ -292,9 +296,7 @@ def run_this():
 
             # 当有不缺车的情况发生时，会有很大奖励
             # 执行重平衡任务，来得到用户的还车地点
-            if (sumlackbike == 0):
-                r = 0
-            elif(user[t]!=0):
+            if(user[t]!=0):
                 # preuser = copy.deepcopy(user[t])
                 # preregion = copy.deepcopy(region)
                 # psokm = km(region=preregion, user=preuser)
@@ -304,6 +306,7 @@ def run_this():
                 # for i in range(len(preuser)):
                 #     if (preuser[i][5] != -1 and preuser[i][6] != -1):
                 #         prer += math.pow(preuser[i][2] - preuser[i][5], 2) + math.pow(preuser[i][3] - preuser[i][6], 2)
+
                 ulp1 = ulpkm(user=user[t], region=region, pB=1, k=100, B=RB_t, cell=cell, celllength=celllength)
                 tempuser, tempfit = ulp1.run()
                 # tempuser为各个用户的终点，tempfit为最小d
@@ -320,12 +323,10 @@ def run_this():
                         tempb = int(tempuser[2 * i + 1] / celllength) * cell + int(tempuser[2 * i] / celllength)
                     # 得到上一阶段的用户还车地点来更新s_
                     if (tempb <= cell * cell):
-                        s_[tempb]+=1
-                        s_[2*regionnum+tempb]+=1
-                balancer = tempfit
-                r=-balancer
-            else:
-                r=-len(init_user[t])*2*math.pow(celllength*cell)
+                        s_[tempb] += 1
+
+                # balancer = tempfit
+
 
             s_[3*regionnum]-=RB_t
             # 计算当前T个时间段的总reward
