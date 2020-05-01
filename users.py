@@ -80,19 +80,25 @@ class getuser():
         print(b)
         return region
 
-users=getuser().getusers()
-print(len(users))
-cell=10
-celllength=300
-T=23
-init_region=[0 for i in range (cell*cell)]
-print("initregion",init_region)
-for t in range(T):
-    print("user[t]",len(users[t]),users[t])
-    init_region=getuser().usertoregion(users[t],init_region,cell,celllength)
-    print(init_region)
-    for i in range(cell*cell):
-        init_region[i]=0
+def getregion():
+    users=getuser().getusers()
+    print(len(users))
+    cell=10
+    celllength=300
+    T=23
+    region=[]
+    init_region=[[0 for i in range (cell*cell)]for t in range(T)]
+    print("initregion",init_region)
+    for t in range(T):
+        print("user[t]",len(users[t]),users[t])
+        init_region[t]=getuser().usertoregion(users[t],init_region[t],cell,celllength)
+        print(init_region)
+
+        # for i in range(cell*cell):
+        #     init_region[i]=0
+    print(region)
+
+getregion()
 
 
 
