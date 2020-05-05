@@ -1,6 +1,8 @@
 import xlrd,xlwt
 import datetime
 import random
+import pandas as pd
+import numpy as np
 
 class getuser_15():
     def getusers(self):
@@ -99,6 +101,14 @@ def getregion():
         print("user[t]",len(users[t]),users[t])
         init_region[t]=getuser_15().usertoregion(users[t],init_region[t],cell,celllength)
         print("init_region[t]",t,init_region[t])
+    #存入excel文件
+    init_region=np.array(init_region)
+    data=pd.DataFrame(init_region)
+        # 写入excel文件
+    writer=pd.ExcelWriter("./region.xlsx")
+    data.to_excel(writer,'sheet1',float_format='%.5f')
+    writer.save()
+    writer.close()
 
         # for i in range(cell*cell):
         #     init_region[i]=0

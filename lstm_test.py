@@ -7,7 +7,7 @@ from torch import nn
 from torch.autograd import Variable
 
 
-data_csv=pd.read_csv('./international-airline-passengers.csv',usecols=[1])
+data_csv=pd.read_excel('./region.xlsx',usecols=[1])
 plt.plot(data_csv)
 
 # 数据预处理
