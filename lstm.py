@@ -93,7 +93,7 @@ pred_test = model(var_data) # 测试集的预测结果
 # 改变输出的格式
 pred_test = pred_test.view(-1).data.numpy()
 # 反归一化
-pred_test=list(map(lambda x: x*scalar, dataset))
+pred_test=list(map(lambda x: x*scalar, pred_test))
 dataset=list(map(lambda x: x *scalar, dataset))
 print("predict",pred_test)
 print(dataset)
@@ -102,6 +102,6 @@ print(dataset)
 # 画出实际结果和预测的结果
 plt.plot(pred_test, 'r', label='prediction')
 # plt.plot(train_Y,'g',label='train_Y')
-# plt.plot(dataset, 'b', label='real')
+plt.plot(dataset, 'b', label='real')
 plt.legend(loc='best')
 plt.show()
