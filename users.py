@@ -5,13 +5,15 @@ import random
 class getuser():
     def getusers(self):
         # 打开需要操作的excel,由于地图左下角区域没有用户，所以不处理那些区域（原点定为（8000，7000））
-        excel = xlrd.open_workbook("./data.xlsx")
+        excel = xlrd.open_workbook("./data2.xlsx")
 
         # 获取excel的sheet表
         sheet = excel.sheet_by_name("Sheet1")
-        starttime = datetime.datetime(2016,8,1,0,00,00)
-        endtime = datetime.datetime(2016,8,1,1,00,00)
+        starttime = datetime.datetime(2016,8,15,0,00,00)
+        endtime = datetime.datetime(2016,8,15,1,00,00)
 
+        # 统计截至日期
+        deadday = datetime.datetime(2016, 8, 16, 0, 00, 00)
         onetime = []
         one = []
         user = []
@@ -36,10 +38,10 @@ class getuser():
                 # print("d",d)
                 # print("onetime:",onetime)
             else:
-                print("one:",one)
-                print(len(one))
+                # print("one:",one)
+                # print(len(one))
                 user.append(one)
-                print("user:",user)
+                # print("user:",user)
                 one = []
                 if d >= endtime:
                     starttime = endtime
@@ -53,11 +55,15 @@ class getuser():
                     onetime.append(random.uniform(0, 200))
                     onetime.append(-1)
                     onetime.append(-1)
-                    print("onetime:", onetime)
+                    # print("onetime:", onetime)
                     one.append(onetime)
-                    print(len(one))
-                    print("one:", one)
+                    # print(len(one))
+                    # print("one:", one)
 
+                if starttime >= deadday:
+                    d = xlrd.xldate_as_datetime(row_i[0], 0)
+                    print("d:", d)
+                    break
         return user
 
     def usertoregion(self,user,region,cell,celllength):
@@ -77,26 +83,26 @@ class getuser():
 
             if(b<a):
                 b=a
-        print(b)
+        # print(b)
         return region
 
 def getregion():
     users=getuser().getusers()
-    print(len(users))
+    # print(len(users))
     cell=10
     celllength=300
     T=23
     region=[]
     init_region=[[0 for i in range (cell*cell)]for t in range(T)]
-    print("initregion",init_region)
+    # print("initregion",init_region)
     for t in range(T):
-        print("user[t]",len(users[t]),users[t])
+        # print("user[t]",len(users[t]),users[t])
         init_region[t]=getuser().usertoregion(users[t],init_region[t],cell,celllength)
-        print(init_region)
+        # print(init_region)
 
         # for i in range(cell*cell):
         #     init_region[i]=0
-    print(region)
+    # print(region)
 
 getregion()
 

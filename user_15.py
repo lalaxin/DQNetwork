@@ -3,6 +3,7 @@ import datetime
 import random
 import pandas as pd
 import numpy as np
+from chinese_calendar import is_workday
 
 class getuser_15():
     def getusers(self):
@@ -29,28 +30,8 @@ class getuser_15():
             d = xlrd.xldate_as_datetime(row_i[0], 0)
             # print(i,": ",row_i)
             onetime = []
-            if d > starttime and d <= endtime:
-                onetime.append(row_i[2])
-                onetime.append(row_i[4])
-                onetime.append(row_i[7])
-                onetime.append(row_i[9])
-                onetime.append(random.uniform(0, 200))
-                onetime.append(-1)
-                onetime.append(-1)
-                one.append(onetime)
-                # print("d",d)
-                # print("onetime:",onetime)
-            else:
-                # print("one:", one)
-                # print(len(one))
-                user.append(one)
-                # print("user:", user)
-                one = []
-                if d >= endtime:
-                    starttime = endtime
-                    print("start", starttime)
-                    endtime = endtime + datetime.timedelta(hours=1)
-                    print("end", endtime)
+            if is_workday(d):
+                if d > starttime and d <= endtime:
                     onetime.append(row_i[2])
                     onetime.append(row_i[4])
                     onetime.append(row_i[7])
@@ -58,14 +39,37 @@ class getuser_15():
                     onetime.append(random.uniform(0, 200))
                     onetime.append(-1)
                     onetime.append(-1)
-                    # print("onetime:", onetime)
                     one.append(onetime)
-                    # print(len(one))
+                    # print("d",d)
+                    # print("onetime:",onetime)
+                else:
                     # print("one:", one)
-            if starttime >= deadday:
-                d = xlrd.xldate_as_datetime(row_i[0], 0)
-                print("d:",d)
-                break
+                    # print(len(one))
+                    user.append(one)
+                    # print("user:", user)
+                    one = []
+                    if d >= endtime:
+                        starttime = endtime
+                        # print("start", starttime)
+                        endtime = endtime + datetime.timedelta(hours=1)
+                        # print("end", endtime)
+                        onetime.append(row_i[2])
+                        onetime.append(row_i[4])
+                        onetime.append(row_i[7])
+                        onetime.append(row_i[9])
+                        onetime.append(random.uniform(0, 200))
+                        onetime.append(-1)
+                        onetime.append(-1)
+                        # print("onetime:", onetime)
+                        one.append(onetime)
+                        # print(len(one))
+                        # print("one:", one)
+                if starttime >= deadday:
+                    d = xlrd.xldate_as_datetime(row_i[0], 0)
+                    print("d:",d)
+                    break
+            else:
+                print("休息日:",d)
         # print(user)
         return user
 
@@ -86,21 +90,21 @@ class getuser_15():
 
             if(b<a):
                 b=a
-        print(b)
+        # print(b)
         return region
 
 def getregion():
     users=getuser_15().getusers()
-    print(len(users))
+    # print(len(users))
     cell=10
     celllength=300
     T=23*15
     init_region=[[0 for i in range (cell*cell)]for t in range(T)]
     # print("initregion",init_region)
     for t in range(T):
-        print("user[t]",len(users[t]),users[t])
+        # print("user[t]",len(users[t]),users[t])
         init_region[t]=getuser_15().usertoregion(users[t],init_region[t],cell,celllength)
-        print("init_region[t]",t,init_region[t])
+        # print("init_region[t]",t,init_region[t])
     #存入excel文件
     init_region=np.array(init_region)
     data=pd.DataFrame(init_region)
