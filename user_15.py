@@ -32,6 +32,12 @@ class getuser_15():
             d = xlrd.xldate_as_datetime(row_i[0], 0)
             # print(i,": ",row_i)
             onetime = []
+
+            if starttime>=deadday:
+                d=xlrd.xldate_as_datetime(row_i[0],0)
+                print("d:",d)
+                break
+
             if is_workday(d):
                 if d > starttime and d <= endtime:
                     onetime.append(row_i[2])
@@ -76,6 +82,10 @@ class getuser_15():
                     break
                 # print("工作日",d)
             else:
+                if d>=endtime:
+                    starttime=endtime
+                    endtime=endtime+datetime.timedelta(hours=1)
+
                 print("休息日:",d)
         print("user长度",len(user))
         return user

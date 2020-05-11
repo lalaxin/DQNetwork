@@ -6,8 +6,8 @@ import copy
 from torch import nn
 from torch.autograd import Variable
 
-timestep_train=23
-result_train=23
+timestep_train=24
+result_train=24
 regionnum=100
 # 设置X,Y数据集，以look_back2为准，取第一个和第二个为数组，形成data_X,取第三个作为预测值，形成data_Y,完成训练集的提取
 def create_dataset(dataset, look_back=timestep_train):
@@ -61,7 +61,7 @@ train_Y = train_Y.reshape(-1, 1, 1)
 train_x = torch.from_numpy(train_X)
 train_y = torch.from_numpy(train_Y)
 # test_x = torch.from_numpy(test_X)
-model = lstm(timestep_train, 16, 1, 4)
+model = lstm(timestep_train, 32, 1, 16)
 # 设置交叉熵损失函数和自适应梯度下降算法
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)

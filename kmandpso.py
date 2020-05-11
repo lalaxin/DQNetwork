@@ -353,7 +353,7 @@ class PSO():
 T=200
 #km
 plt.ion()
-my_pso1=PSO(pN=500,dim=len(User),max_iter=T,pB=1,k=2,User=User,flag=0)
+my_pso1=PSO(pN=50,dim=len(User),max_iter=T,pB=1,k=2,User=User,flag=0)
 my_pso1.init_Population()
 UUser,ffit,fitness2,sumpi1=my_pso1.iterator()
 plt.ioff()
