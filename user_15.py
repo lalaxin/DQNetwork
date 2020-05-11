@@ -25,6 +25,8 @@ class getuser_15():
         print("start", starttime)
         print("end", endtime)
 
+        day=0
+
         for i in range(1, sheet.nrows):
             row_i = sheet.row_values(i)
             d = xlrd.xldate_as_datetime(row_i[0], 0)
@@ -46,6 +48,10 @@ class getuser_15():
                     # print("one:", one)
                     # print(len(one))
                     user.append(one)
+                    day+=1
+                    print("day",day)
+
+                    print("多余工作日",d)
                     # print("user:", user)
                     one = []
                     if d >= endtime:
@@ -57,7 +63,7 @@ class getuser_15():
                         onetime.append(row_i[4])
                         onetime.append(row_i[7])
                         onetime.append(row_i[9])
-                        onetime.append(random.uniform(0, 200))
+                        onetime.append(random.uniform(0, 500))   #用户的最大步行距离
                         onetime.append(-1)
                         onetime.append(-1)
                         # print("onetime:", onetime)
@@ -68,9 +74,10 @@ class getuser_15():
                     d = xlrd.xldate_as_datetime(row_i[0], 0)
                     print("d:",d)
                     break
+                # print("工作日",d)
             else:
                 print("休息日:",d)
-        # print(user)
+        print("user长度",len(user))
         return user
 
     def usertoregion(self,user,region,cell,celllength):
@@ -98,7 +105,7 @@ def getregion():
     # print(len(users))
     cell=10
     celllength=300
-    T=23*15
+    T=24*11
     init_region=[[0 for i in range (cell*cell)]for t in range(T)]
     # print("initregion",init_region)
     for t in range(T):
@@ -119,5 +126,3 @@ def getregion():
 
 
 getregion()
-# if __name__  == '__main__':
-#     u = getusers()
