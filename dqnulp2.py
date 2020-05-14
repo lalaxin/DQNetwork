@@ -45,7 +45,7 @@ cell=4
 # 单个网格长度
 celllength=3
 regionnum=cell*cell #区域个数
-EPISODE=1500 #迭代次数
+EPISODE=1000 #迭代次数
 # 记录损失
 loss=[]
 
@@ -273,7 +273,7 @@ def run_this():
                     region[i][2]=0
                 s[2*regionnum + i]=region[i][2]
             if (t != 0):
-                r = (len(init_user[t])-len(removeuser) )/ len(init_user[t])
+                r = -len(removeuser)
                 print("action,RB_t,r", action, RB_t,r)
                 dqn.store_transition(s0, action, r, s)
                 # s首先需要存储记忆，记忆库中有一些东西之后才能学习（前200步都是在存储记忆,大于200之后每5步学习一次）

@@ -104,8 +104,8 @@ for t in range (100):
     dataset=list(map(lambda x: x *scalar, dataset))
     pred_result=pred_test[-result_train:]
     data_result=dataclose[-result_train:]
-    print("后23pred",pred_result)
-    print("后23_dataset",data_result)
+    print("后24pred",pred_result)
+    print("后24_dataset",data_result)
     for i in range (len(pred_result)):
         if(pred_result[i]<0):
             pred_result[i]=0
@@ -120,7 +120,7 @@ for t in range (100):
 init_region = np.array(userpredict)
 data = pd.DataFrame(init_region)
 # 写入excel文件
-writer = pd.ExcelWriter("./region.xlsx")
+writer = pd.ExcelWriter("./region_1.xlsx")
 data.to_excel(writer, 'sheet2', float_format='%.5f')
 writer.save()
 writer.close()
