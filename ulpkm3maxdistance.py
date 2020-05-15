@@ -3,7 +3,8 @@ import numpy as np
 from scipy.optimize import minimize
 import math
 import copy
-
+from km3maxdistance import km
+from helloword import User
 
 class ulpkm:
     def __init__(self,user,region,pB,k,B,cell,celllength):
@@ -20,6 +21,7 @@ class ulpkm:
         psokm = km(region=initregion, user=self.kmuser)
         psokm.build_graph()
         self.kmuser = psokm.KM()
+        print("self.kmuser",self.kmuser)
 
     def objective(self,x):
         temp = 0
@@ -64,15 +66,18 @@ class ulpkm:
         x = solution.x
         print('目标值: ' + str(self.objective(x)))
         print('答案为')
+        for i in range(len(x)):
+            x[i]=round(x[i],3)
         for i in range(len(self.user)):
             print('x' + str(i) + '=' + str(x[2 * i]))
             print('y' + str(i) + '=' + str(x[2 * i + 1]))
+
         return x,self.objective(x)
 
 
-user=[[4, 4, 4, 1, 0.9568767390288544, -1, -1], [0, 0, 3, 0, 0.3508448982850835, -1, -1], [2, 1, 2, 4, 0.5086846864053723, -1, -1], [0, 3, 1, 2, 0.4112544710484871, -1, -1],[2, 1, 2, 0, 0.7062465057950914, -1, -1], [4, 4, 2, 1, 0.40560560060411144, -1, -1]]
+user=copy.deepcopy(User)
 Region=[[0, 2, 6, 1.0, 1.0], [0, 1, 10, 3.0, 1.0], [0, 1, 3, 1.0, 3.0], [0, 2, 9, 3.0, 3.0]]
-ulp1=ulpkm(user=user,region=Region,pB=1,k=2,B=20,cell=4,celllength=2)
+ulp1=ulpkm(user=user,region=Region,pB=1,k=2,B=5,cell=4,celllength=2)
 x,y=ulp1.run()
 print(x)
 print(y)

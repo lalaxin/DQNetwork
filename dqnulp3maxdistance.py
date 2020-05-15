@@ -8,7 +8,7 @@ import numpy as np
 import random
 import math
 import copy
-from ULPkm import ulpkm
+from ulpkm3maxdistance import ulpkm
 from users import getuser
 
 from km2 import km
