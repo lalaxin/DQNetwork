@@ -103,7 +103,7 @@ def getregion():
 
     # print(region)
 
-getregion()
+# getregion()
 
 
 

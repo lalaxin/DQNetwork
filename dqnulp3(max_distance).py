@@ -1,12 +1,5 @@
 """
-View more, visit my tutorial page: https://morvanzhou.github.io/tutorials/
-My Youtube Channel: https://www.youtube.com/user/MorvanZhou
-More about Reinforcement learning: https://morvanzhou.github.io/tutorials/machine-learning/reinforcement-learning/
-
-Dependencies:
-torch: 0.4
-gym: 0.8.1
-numpy
+考虑用户圆形区域取车，当前区域取车奖励为1，然后依次递减
 """
 import torch
 import torch.nn as nn
@@ -22,16 +15,14 @@ from km2 import km
 from helloword import matchregion
 import matplotlib.pyplot as plt
 import time
-# import gym
 from torch.autograd import Variable
 
 random.seed(1)
-
 # Hyper Parameters
 BATCH_SIZE = 128
 
 
-LR = 0.0004             # learning rate
+LR = 0.0001             # learning rate
 EPSILON = 0               # greedy policy
 GAMMA = 0.99                 # reward discount
 TARGET_REPLACE_ITER = 80   # target update frequency
@@ -41,27 +32,28 @@ MEMORY_CAPACITY =4000
 T=10 #时间时段
 RB=500#预算约束
 # 横向网格数
-cell=2
+cell=4
 # 单个网格长度
 celllength=3
 regionnum=cell*cell #区域个数
-EPISODE=1500 #迭代次数
+EPISODE=1000 #迭代次数
 # 记录损失
 loss=[]
 
-usernum=2 #用户数为10
+usernum=10 #用户数为10
 
 # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
 init_region = list()
 for i in range(regionnum):
     # print(i)
-    regionn =[0,random.randint(1,2),0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
+    regionn =[0,random.randint(1,5),0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
     # print(r)
     init_region.append(regionn)
     # print(region)
 print("initregion",init_region)
 # 用户需求,T个时间段的用户需求# 定义用户数组（起点横坐标，起点纵坐标，终点横坐标，终点纵坐标，最大步行距离,期望停车区域横坐标，期望停车区域纵坐标）
 def init_user_demand():
+
     userdemand=[[[0]for i in range (usernum)] for t in range (T)]
     for t in range (T):
         for i in range (usernum):
@@ -82,7 +74,7 @@ def init_state():
 # 从剩余预算中选取一个预算作为当前时段的钱
 sum_loss=[]
 N_ACTIONS = 100
-# 接收的observation维度(区域当前供应，当前阶段区域用户数，下个阶段的缺车区域，预算约束)
+# 接收的observation维度(区域当前供应，上个阶段每个区域的用户数，上个阶段每个区域到达的用户数，预算约束)
 N_STATES = 3*regionnum+1
 class Net(nn.Module):
     # 定义卷积层
@@ -92,12 +84,12 @@ class Net(nn.Module):
         # nn.Linear用于设置网络中的全连接层（全连接层的输入输出都是二维张量）nn.linear(in_features,out_features)in_features指size of input sample，out_features指size of output sample
         # 定义网络结构y=w*x+b weight[out_features,in_features],w,b是神经网络的参数，我们的目的就是不断更新神经网络的参数来优化目标函数
         # 我们只需将输入的特征数和输出的特征数传递给torch.nn.Linear类，就会自动生成对应维度的权重参数和偏置
-        self.fc1 = nn.Linear(N_STATES, 512)
+        self.fc1 = nn.Linear(N_STATES, 256)
         self.fc1.weight.data.normal_(0, 0.1)   # initialization,权重初始化，利用正态进行初始化
         # self.fc2 = nn.Linear(124, 124)
         # self.fc2.weight.data.normal_(0, 0.1)
         # 第二层神经网络，用于输出action
-        self.out = nn.Linear(512, N_ACTIONS)
+        self.out = nn.Linear(256, N_ACTIONS)
         self.out.weight.data.normal_(0, 0.1)   # initialization
 
     # 执行数据的流动
@@ -133,7 +125,7 @@ class DQN(object):
         # floattensor是pytorch的基本变量类型,torch.FloatTensor(x)是将x转换成该类型
         observation = torch.unsqueeze(torch.FloatTensor(observation), 0)
         if (self.EPSILON < 0.9):
-            self.EPSILON += 0.01
+            self.EPSILON += 0.001
         # 这里只输入一个sample
         if np.random.uniform() < self.EPSILON:   # greedy
             # print("self.Epsion",self.EPSILON)
@@ -215,6 +207,7 @@ def run_this():
         # 初始化环境
         r=0
         sum_r=0
+        # done=False
         # 初始化状态以及下一时间段的状态
         user = copy.deepcopy(init_user)
         region = copy.deepcopy(init_region)
@@ -229,7 +222,7 @@ def run_this():
                 s[regionnum + i] = 0
                 s_[2 * regionnum + i] = 0
 
-            # 判断用户的初始骑车区域，同时并更新状态
+            # 判断用户的初始骑车区域，同时并更新状态，更新到s_
             for i in range(len(user[t])):
                 if (user[t][i][0] == cell * celllength and user[t][i][1] == cell * celllength):
                     tempa = int(cell * cell - 1)
@@ -239,7 +232,6 @@ def run_this():
                     tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength) - cell
                 else:
                     tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength)
-                # print(a)
                 if (tempa < cell * cell):
                     if (s[tempa] <= 0):
                         # 将多余的用户存于数组中，循环结束后再删除
@@ -248,13 +240,19 @@ def run_this():
                         s[regionnum + tempa] += 1
                         s_[tempa]-=1
                         s[tempa] -= 1
+
+
             # 下一时刻用户到来后存储用户信息再将状态对存于记忆库中
             for i in range(len(removeuser)):
-                # 没有拿到车的用户离开
+                # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),这一时间段离开的用户算上个时间段的惩罚
                 user[t].remove(removeuser[i])
                 # r-=cell*celllength*math.sqrt(2)
 
-            # 更新region来生成重平衡任务,求得缺车数，并存于状态中
+                # print("第t时的奖励",  t, r)
+
+            #         将没有骑到车的无效用户移除
+
+            # 更新region来生成重平衡任务,求得缺车数
             for i in range (regionnum):
                 region[i][1] = s[i]
                 # 初始平衡状态下的车的数量
@@ -265,12 +263,14 @@ def run_this():
                     region[i][2]=0
                 s[2*regionnum + i]=region[i][2]
             if (t != 0):
+                r = -len(removeuser)
                 print("action,RB_t,r", action, RB_t,r)
                 dqn.store_transition(s0, action, r, s)
                 # s首先需要存储记忆，记忆库中有一些东西之后才能学习（前200步都是在存储记忆,大于200之后每5步学习一次）
                 if dqn.memory_counter > MEMORY_CAPACITY:
                     dqn.learn()
                 sum_r += r
+
 
             # print(dqn.eval_net.fc1.weight)
             action = dqn.choose_action(s)
@@ -286,9 +286,7 @@ def run_this():
 
             # 当有不缺车的情况发生时，会有很大奖励
             # 执行重平衡任务，来得到用户的还车地点
-            if (sumlackbike == 0):
-                r = 0
-            elif(user[t]!=0):
+            if(user[t]!=0):
                 # preuser = copy.deepcopy(user[t])
                 # preregion = copy.deepcopy(region)
                 # psokm = km(region=preregion, user=preuser)
@@ -298,6 +296,7 @@ def run_this():
                 # for i in range(len(preuser)):
                 #     if (preuser[i][5] != -1 and preuser[i][6] != -1):
                 #         prer += math.pow(preuser[i][2] - preuser[i][5], 2) + math.pow(preuser[i][3] - preuser[i][6], 2)
+
                 ulp1 = ulpkm(user=user[t], region=region, pB=1, k=100, B=RB_t, cell=cell, celllength=celllength)
                 tempuser, tempfit = ulp1.run()
                 # tempuser为各个用户的终点，tempfit为最小d
@@ -314,12 +313,10 @@ def run_this():
                         tempb = int(tempuser[2 * i + 1] / celllength) * cell + int(tempuser[2 * i] / celllength)
                     # 得到上一阶段的用户还车地点来更新s_
                     if (tempb <= cell * cell):
-                        s_[tempb]+=1
-                        # s_[2*regionnum+tempb]+=1
-                balancer = tempfit
-                r=-balancer
-            else:
-                r=-len(init_user[t])*2*math.pow(celllength*cell)
+                        s_[tempb] += 1
+
+                # balancer = tempfit
+
 
             s_[3*regionnum]-=RB_t
             # 计算当前T个时间段的总reward

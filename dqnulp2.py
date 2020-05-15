@@ -31,7 +31,7 @@ random.seed(1)
 BATCH_SIZE = 128
 
 
-LR = 0.0004             # learning rate
+LR = 0.0001             # learning rate
 EPSILON = 0               # greedy policy
 GAMMA = 0.99                 # reward discount
 TARGET_REPLACE_ITER = 80   # target update frequency
@@ -83,7 +83,7 @@ def init_state():
 # 从剩余预算中选取一个预算作为当前时段的钱
 sum_loss=[]
 N_ACTIONS = 100
-# 接收的observation维度(区域当前供应，区域当前用户数，上个阶段每个区域到达的用户数，预算约束)
+# 接收的observation维度(区域当前供应，上个阶段每个区域的用户数，上个阶段每个区域到达的用户数，预算约束)
 N_STATES = 3*regionnum+1
 class Net(nn.Module):
     # 定义卷积层
@@ -93,12 +93,12 @@ class Net(nn.Module):
         # nn.Linear用于设置网络中的全连接层（全连接层的输入输出都是二维张量）nn.linear(in_features,out_features)in_features指size of input sample，out_features指size of output sample
         # 定义网络结构y=w*x+b weight[out_features,in_features],w,b是神经网络的参数，我们的目的就是不断更新神经网络的参数来优化目标函数
         # 我们只需将输入的特征数和输出的特征数传递给torch.nn.Linear类，就会自动生成对应维度的权重参数和偏置
-        self.fc1 = nn.Linear(N_STATES, 512)
+        self.fc1 = nn.Linear(N_STATES, 256)
         self.fc1.weight.data.normal_(0, 0.1)   # initialization,权重初始化，利用正态进行初始化
         # self.fc2 = nn.Linear(124, 124)
         # self.fc2.weight.data.normal_(0, 0.1)
         # 第二层神经网络，用于输出action
-        self.out = nn.Linear(512, N_ACTIONS)
+        self.out = nn.Linear(256, N_ACTIONS)
         self.out.weight.data.normal_(0, 0.1)   # initialization
 
     # 执行数据的流动
@@ -231,7 +231,7 @@ def run_this():
                 s[regionnum + i] = 0
                 s_[2 * regionnum + i] = 0
 
-            # 判断用户的初始骑车区域，同时并更新状态
+            # 判断用户的初始骑车区域，同时并更新状态，更新到s_
             for i in range(len(user[t])):
                 if (user[t][i][0] == cell * celllength and user[t][i][1] == cell * celllength):
                     tempa = int(cell * cell - 1)
@@ -241,7 +241,6 @@ def run_this():
                     tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength) - cell
                 else:
                     tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength)
-                # print(a)
                 if (tempa < cell * cell):
                     if (s[tempa] <= 0):
                         # 将多余的用户存于数组中，循环结束后再删除
