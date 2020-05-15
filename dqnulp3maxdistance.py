@@ -222,6 +222,8 @@ def run_this():
                 s[regionnum + i] = 0
                 s_[2 * regionnum + i] = 0
 
+            # 计算未优化前用户的缺车数（来作为reward的分母）
+
             # 判断用户的初始骑车区域，同时并更新状态，更新到s_
             for i in range(len(user[t])):
                 if (user[t][i][0] == cell * celllength and user[t][i][1] == cell * celllength):
