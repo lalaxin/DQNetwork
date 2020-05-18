@@ -40,16 +40,21 @@ class getuser_15():
                 d=xlrd.xldate_as_datetime(row_i[0],0)
                 print("d:",d)
                 break
+            while (d<=starttime or d>endtime):
+                starttime = endtime
+                # print("start", starttime)
+                endtime = endtime + datetime.timedelta(minutes=10)
 
             if d > starttime and d <= endtime:
                 onetime.append(row_i[2])
                 onetime.append(row_i[4])
                 onetime.append(row_i[7])
                 onetime.append(row_i[9])
-                onetime.append(random.uniform(0, 200))
+                onetime.append(random.uniform(0, 500))
                 onetime.append(-1)
                 onetime.append(-1)
                 one.append(onetime)
+
                 # print("d",d)
                 # print("onetime:",onetime)
             else:
@@ -78,11 +83,8 @@ class getuser_15():
                     one.append(onetime)
                     # print(len(one))
                     # print("one:", one)
-            if starttime >= deadday:
-                d = xlrd.xldate_as_datetime(row_i[0], 0)
-                print("d:",d)
-                break
-            # print("工作日",d)
+
+
 
         print("user长度",len(user))
         return user
@@ -112,10 +114,10 @@ def getregion():
     # print(len(users))
     cell=10
     celllength=300
-    T=24*11
+    T=20*11
     init_region=[[0 for i in range (cell*cell)]for t in range(T)]
     # print("initregion",init_region)
-    for t in range(T):
+    for t in range (len(users)):
         # print("user[t]",len(users[t]),users[t])
         init_region[t]=getuser_15().usertoregion(users[t],init_region[t],cell,celllength)
         # print("init_region[t]",t,init_region[t])
