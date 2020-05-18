@@ -41,55 +41,49 @@ class getuser_15():
                 print("d:",d)
                 break
 
-            if is_workday(d):
-                if d > starttime and d <= endtime:
+            if d > starttime and d <= endtime:
+                onetime.append(row_i[2])
+                onetime.append(row_i[4])
+                onetime.append(row_i[7])
+                onetime.append(row_i[9])
+                onetime.append(random.uniform(0, 200))
+                onetime.append(-1)
+                onetime.append(-1)
+                one.append(onetime)
+                # print("d",d)
+                # print("onetime:",onetime)
+            else:
+                # print("one:", one)
+                # print(len(one))
+                user.append(one)
+                day+=1
+                print("day",day)
+
+                print("多余工作日",d)
+                # print("user:", user)
+                one = []
+                if d >= endtime:
+                    starttime = endtime
+                    # print("start", starttime)
+                    endtime = endtime + datetime.timedelta(minutes=10)
+                    # print("end", endtime)
                     onetime.append(row_i[2])
                     onetime.append(row_i[4])
                     onetime.append(row_i[7])
                     onetime.append(row_i[9])
-                    onetime.append(random.uniform(0, 200))
+                    onetime.append(random.uniform(0, 500))   #用户的最大步行距离
                     onetime.append(-1)
                     onetime.append(-1)
+                    # print("onetime:", onetime)
                     one.append(onetime)
-                    # print("d",d)
-                    # print("onetime:",onetime)
-                else:
-                    # print("one:", one)
                     # print(len(one))
-                    user.append(one)
-                    day+=1
-                    print("day",day)
+                    # print("one:", one)
+            if starttime >= deadday:
+                d = xlrd.xldate_as_datetime(row_i[0], 0)
+                print("d:",d)
+                break
+            # print("工作日",d)
 
-                    print("多余工作日",d)
-                    # print("user:", user)
-                    one = []
-                    if d >= endtime:
-                        starttime = endtime
-                        # print("start", starttime)
-                        endtime = endtime + datetime.timedelta(minutes=10)
-                        # print("end", endtime)
-                        onetime.append(row_i[2])
-                        onetime.append(row_i[4])
-                        onetime.append(row_i[7])
-                        onetime.append(row_i[9])
-                        onetime.append(random.uniform(0, 500))   #用户的最大步行距离
-                        onetime.append(-1)
-                        onetime.append(-1)
-                        # print("onetime:", onetime)
-                        one.append(onetime)
-                        # print(len(one))
-                        # print("one:", one)
-                if starttime >= deadday:
-                    d = xlrd.xldate_as_datetime(row_i[0], 0)
-                    print("d:",d)
-                    break
-                # print("工作日",d)
-            else:
-                if d>=endtime:
-                    starttime=endtime
-                    endtime=endtime+datetime.timedelta(minutes=10)
-
-                print("休息日:",d)
         print("user长度",len(user))
         return user
 
