@@ -15,8 +15,8 @@ class getuser_15():
 
         # 获取excel的sheet表
         sheet = excel.sheet_by_name("Sheet2")
-        starttime = datetime.datetime(2016, 8, 1, 0, 00, 00)
-        endtime = datetime.datetime(2016, 8, 1, 0, 10, 00)
+        starttime = datetime.datetime(2016, 8, 1, 8, 00, 00)
+        endtime = datetime.datetime(2016, 8, 1, 8, 10, 00)
 
         #统计截至日期
         deadday = datetime.datetime(2016,8,16,0,00,00)
@@ -40,10 +40,7 @@ class getuser_15():
                 d=xlrd.xldate_as_datetime(row_i[0],0)
                 print("d:",d)
                 break
-            while (d<=starttime or d>endtime):
-                starttime = endtime
-                # print("start", starttime)
-                endtime = endtime + datetime.timedelta(minutes=10)
+
 
             if d > starttime and d <= endtime:
                 onetime.append(row_i[2])
@@ -83,6 +80,10 @@ class getuser_15():
                     one.append(onetime)
                     # print(len(one))
                     # print("one:", one)
+            while (d<starttime or d>endtime):
+                starttime = endtime
+                # print("start", starttime)
+                endtime = endtime + datetime.timedelta(minutes=10)
 
 
 
@@ -121,14 +122,14 @@ def getregion():
         # print("user[t]",len(users[t]),users[t])
         init_region[t]=getuser_15().usertoregion(users[t],init_region[t],cell,celllength)
         # print("init_region[t]",t,init_region[t])
-    # #存入excel文件
-    # init_region=np.array(init_region)
-    # data=pd.DataFrame(init_region)
-    #     # 写入excel文件
-    # writer=pd.ExcelWriter("./regionminute10_15.xlsx")
-    # data.to_excel(writer,'sheet1',float_format='%.5f')
-    # writer.save()
-    # writer.close()
+    #存入excel文件
+    init_region=np.array(init_region)
+    data=pd.DataFrame(init_region)
+        # 写入excel文件
+    writer=pd.ExcelWriter("./regionminute10_15.xlsx")
+    data.to_excel(writer,'sheet1',float_format='%.5f')
+    writer.save()
+    writer.close()
 
         # for i in range(cell*cell):
         #     init_region[i]=0
