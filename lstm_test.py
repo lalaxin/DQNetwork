@@ -33,7 +33,7 @@ class lstm(nn.Module):
 userpredict=[[0 for i in range(regionnum)]for i in range(result_train)]
 
 for t in range (100):
-    data_csv=pd.read_excel('./region.xlsx',usecols=[14])
+    data_csv=pd.read_excel('./region.xlsx',usecols=[t])
     # 数据预处理
     data_csv = data_csv.dropna()  # 滤除缺失数据
     dataset = data_csv.values   # 获得csv的值

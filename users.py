@@ -1,3 +1,6 @@
+
+
+
 import xlrd,xlwt
 import datetime
 import random
@@ -46,7 +49,7 @@ class getuser():
                 if d >= endtime:
                     starttime = endtime
                     print("start", starttime)
-                    endtime = endtime + datetime.timedelta(hours=1)
+                    endtime = endtime + datetime.timedelta(hours=1/6)
                     print("end", endtime)
                     onetime.append(row_i[2])
                     onetime.append(row_i[4])

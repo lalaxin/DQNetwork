@@ -217,6 +217,7 @@ def run_this():
         removeuser=list()
 
         for t in range (T):
+            # 由于用户的骑行时间一般为十分钟，每十分钟处理一次用户，自行车还车是一个阶段
             # 进入下一个时间槽后，将当前状态的用户数以及下一状态的用户还车位置都清0
             for i in range (regionnum):
                 s[regionnum + i] = 0
