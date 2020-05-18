@@ -42,7 +42,7 @@ class getuser_15():
                 break
 
 
-            if d > starttime and d <= endtime:
+            if d >= starttime and d <= endtime:
                 onetime.append(row_i[2])
                 onetime.append(row_i[4])
                 onetime.append(row_i[7])
@@ -64,11 +64,11 @@ class getuser_15():
                 print("多余工作日",d)
                 # print("user:", user)
                 one = []
-                if d >= endtime:
+                if d > endtime:
                     starttime = endtime
-                    # print("start", starttime)
+                    print("start", starttime)
                     endtime = endtime + datetime.timedelta(minutes=10)
-                    # print("end", endtime)
+                    print("end", endtime)
                     onetime.append(row_i[2])
                     onetime.append(row_i[4])
                     onetime.append(row_i[7])
@@ -81,9 +81,13 @@ class getuser_15():
                     # print(len(one))
                     # print("one:", one)
             while (d<starttime or d>endtime):
-                starttime = endtime
-                # print("start", starttime)
-                endtime = endtime + datetime.timedelta(minutes=10)
+                t = starttime.time()
+                if t == datetime.time(10,00,00):
+                    starttime = starttime + datetime.timedelta(hours=22)
+                    endtime = endtime + datetime.timedelta(hours=22)
+                else:
+                    starttime = endtime
+                    endtime = endtime + datetime.timedelta(minutes=10)
 
 
 
