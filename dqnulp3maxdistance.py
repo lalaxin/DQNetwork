@@ -211,10 +211,12 @@ def run_this():
         # 初始化状态以及下一时间段的状态
         user = copy.deepcopy(init_user)
         region = copy.deepcopy(init_region)
+        preregion=copy.deepcopy(region)
         s = copy.deepcopy(init_s)
         s_=copy.deepcopy(s)
         s0=copy.deepcopy(s)
         removeuser=list()
+        preremove=list()
 
         for t in range (T):
             # 由于用户的骑行时间一般为十分钟，每十分钟处理一次用户，自行车还车是一个阶段
@@ -223,8 +225,8 @@ def run_this():
                 s[regionnum + i] = 0
                 s_[2 * regionnum + i] = 0
 
-            # 计算未优化前用户的缺车数（来作为reward的分母）
-
+            # 计算未优化前用户的缺车数（来作为reward的分母）[根据用户的初始还车区域和新用户到来后来计算]
+            # 将这一阶段的用户的还车区域存于一个数组中，用于下一阶段计算reward(直接计算preregion（每个区域的车的数量）)
             # 判断用户的初始骑车区域，同时并更新状态，更新到s_
             for i in range(len(user[t])):
                 if (user[t][i][0] == cell * celllength and user[t][i][1] == cell * celllength):
@@ -243,15 +245,42 @@ def run_this():
                         s[regionnum + tempa] += 1
                         s_[tempa]-=1
                         s[tempa] -= 1
+                    if(t!=0 and preregion[tempa]<=0):
+                        preremove.append(user[t][i])
+                    else:
+                        preregion[tempa]-=1
+
+            #             考虑用户到周围骑车的情况
+
+
+            for i in range(len(removeuser)):
+                # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),这个惩罚算的是调度时那个阶段的
+                #         将没有骑到车的无效用户移除
+                user[t].remove(removeuser[i])
+
+            # 用户取车后的状态+用户还车的区域即为preregion
+            for i in range (regionnum):
+                preregion[i]=s[i]
+            # 计算用户的本来还车区域
+            for i in range(len(user[t])):
+                if (user[t][i][2] == cell * celllength and user[t][i][1] == cell * celllength):
+                    tempa = int(cell * cell - 1)
+                elif (user[t][i][2] == cell * celllength):
+                    tempa = int(user[t][i][3] / celllength) * cell + int(user[t][i][2] / celllength) - 1
+                elif (user[t][i][1] == cell * celllength):
+                    tempa = int(user[t][i][3] / celllength) * cell + int(user[t][i][2] / celllength) - cell
+                else:
+                    tempa = int(user[t][i][3] / celllength) * cell + int(user[t][i][2] / celllength)
+                if (tempa < cell * cell):
+                    preregion[tempa]+=1
+
+
 
 
             # 下一时刻用户到来后存储用户信息再将状态对存于记忆库中
             for i in range(len(removeuser)):
                 # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),这一时间段离开的用户算上个时间段的惩罚
                 user[t].remove(removeuser[i])
-                # r-=cell*celllength*math.sqrt(2)
-
-                # print("第t时的奖励",  t, r)
 
             #         将没有骑到车的无效用户移除
 
@@ -324,6 +353,7 @@ def run_this():
             s_[3*regionnum]-=RB_t
             # 计算当前T个时间段的总reward
             del removeuser[:]
+            del preremove[:]
             s0=copy.deepcopy(s)
             s = copy.deepcopy(s_)
         print("这一代的总奖励",sum_r)
