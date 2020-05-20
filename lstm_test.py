@@ -1,3 +1,6 @@
+"""
+从regionminute10_15.xlsx十分钟间隔数据中读取，用其预测15号8-10点的数据，将其存到region_1中
+"""
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -33,7 +36,7 @@ class lstm(nn.Module):
 userpredict=[[0 for i in range(regionnum)]for i in range(result_train)]
 
 for t in range (100):
-    data_csv=pd.read_excel('./region.xlsx',usecols=[t])
+    data_csv=pd.read_excel('./regionminute10_15.xlsx',usecols=[t])
     # 数据预处理
     data_csv = data_csv.dropna()  # 滤除缺失数据
     dataset = data_csv.values   # 获得csv的值
@@ -61,7 +64,7 @@ for t in range (100):
     train_x = torch.from_numpy(train_X)
     train_y = torch.from_numpy(train_Y)
     # test_x = torch.from_numpy(test_X)
-    model = lstm(timestep_train, 32, 1, 8)
+    model = lstm(timestep_train, 32, 1, 4)
     # 设置交叉熵损失函数和自适应梯度下降算法
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
