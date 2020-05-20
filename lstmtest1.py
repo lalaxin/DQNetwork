@@ -6,8 +6,8 @@ import copy
 from torch import nn
 from torch.autograd import Variable
 
-timestep_train=24
-result_train=24
+timestep_train=12
+result_train=12
 regionnum=100
 # 设置X,Y数据集，以look_back2为准，取第一个和第二个为数组，形成data_X,取第三个作为预测值，形成data_Y,完成训练集的提取
 def create_dataset(dataset, look_back=timestep_train):
@@ -33,7 +33,7 @@ class lstm(nn.Module):
 userpredict=[[0 for i in range(regionnum)]for i in range(result_train)]
 
 # for t in range (100):
-data_csv=pd.read_excel('./region.xlsx',usecols=[14])
+data_csv=pd.read_excel('./regionminute10_15.xlsx',usecols=[24])
 # 数据预处理
 data_csv = data_csv.dropna()  # 滤除缺失数据
 dataset = data_csv.values   # 获得csv的值
@@ -61,7 +61,7 @@ train_Y = train_Y.reshape(-1, 1, 1)
 train_x = torch.from_numpy(train_X)
 train_y = torch.from_numpy(train_Y)
 # test_x = torch.from_numpy(test_X)
-model = lstm(timestep_train, 32, 1, 8)
+model = lstm(timestep_train, 32, 1, 4)
 # 设置交叉熵损失函数和自适应梯度下降算法
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
@@ -92,12 +92,12 @@ pred_test = pred_test.view(-1).data.numpy()
 pred_test=np.concatenate((np.zeros(result_train),pred_test))
 assert len(pred_test)==len(dataclose)
 
-# plt.plot(pred_test, 'r', linewidth=1,label='prediction')
-# # plt.plot(train_Y,'g',label='train_Y')
-# plt.plot(dataset, 'b',linewidth=1, label='real')
-# plt.plot((train_size,train_size),(0,1),'g--')
-# plt.legend(loc='best')
-# plt.show()
+plt.plot(pred_test, 'r', linewidth=1,label='prediction')
+# plt.plot(train_Y,'g',label='train_Y')
+plt.plot(dataset, 'b',linewidth=1, label='real')
+plt.plot((train_size,train_size),(0,1),'g--')
+plt.legend(loc='best')
+plt.show()
 
 # 反归一化(同时要处理数据为整数)
 pred_test=list(map(lambda x: x*scalar, pred_test))

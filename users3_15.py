@@ -1,5 +1,5 @@
 """
-data3-sheet2   8:00-10:00  十分钟时间间隔  8月5号的数据去除了处理时有问题
+data3-sheet2   8:00-10:00  十分钟时间间隔 用户数据存在regionminute10_15.xlsx中
 """
 import xlrd,xlwt
 import datetime
@@ -42,7 +42,7 @@ class getuser_15():
                 break
 
 
-            if d > starttime and d <= endtime:
+            if d >= starttime and d <= endtime:
                 onetime.append(row_i[2])
                 onetime.append(row_i[4])
                 onetime.append(row_i[7])
@@ -64,11 +64,11 @@ class getuser_15():
                 print("多余工作日",d)
                 # print("user:", user)
                 one = []
-                if d >= endtime:
+                if d > endtime:
                     starttime = endtime
-                    # print("start", starttime)
+                    print("start", starttime)
                     endtime = endtime + datetime.timedelta(minutes=10)
-                    # print("end", endtime)
+                    print("end", endtime)
                     onetime.append(row_i[2])
                     onetime.append(row_i[4])
                     onetime.append(row_i[7])
@@ -80,15 +80,18 @@ class getuser_15():
                     one.append(onetime)
                     # print(len(one))
                     # print("one:", one)
+            if i==sheet.nrows-1:
+                user.append(one)
+                day+=1
+                print(day)
             while (d<starttime or d>endtime):
-                t=starttime.time()
-                if t==datetime.time(10,00,00):
-                    starttime=starttime+datetime.timedelta(hours=22)
-                    endtime=endtime+datetime.timedelta(hours=22)
+                t = starttime.time()
+                if t == datetime.time(10,00,00):
+                    starttime = starttime + datetime.timedelta(hours=22)
+                    endtime = endtime + datetime.timedelta(hours=22)
                 else:
-                    starttime=endtime
-                    endtime==endtime+datetime.timedelta(minutes=10)
-
+                    starttime = endtime
+                    endtime = endtime + datetime.timedelta(minutes=10)
 
 
 
@@ -120,7 +123,7 @@ def getregion():
     # print(len(users))
     cell=10
     celllength=300
-    T=20*11
+    T=len(users)
     init_region=[[0 for i in range (cell*cell)]for t in range(T)]
     # print("initregion",init_region)
     for t in range (len(users)):
