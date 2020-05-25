@@ -1,5 +1,5 @@
 """
-考虑用户圆形区域取车，即周围区域，临近区域的中心点在步行距离范围内时，可取车
+考虑用户圆形区域取车，当前区域取车奖励为1，然后依次递减
 """
 import torch
 import torch.nn as nn
@@ -44,17 +44,13 @@ usernum=20 #用户数为10
 
 # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
 init_region = list()
-number=0
 for i in range(regionnum):
     # print(i)
     regionn =[0,random.randint(0,2),0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
     # print(r)
     init_region.append(regionn)
-    number += regionn[1]
     # print(region)
 print("initregion",init_region)
-
-
 # 用户需求,T个时间段的用户需求# 定义用户数组（起点横坐标，起点纵坐标，终点横坐标，终点纵坐标，最大步行距离,期望停车区域横坐标，期望停车区域纵坐标）
 def init_user_demand():
 

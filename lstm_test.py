@@ -9,8 +9,8 @@ import copy
 from torch import nn
 from torch.autograd import Variable
 
-timestep_train=24
-result_train=24
+timestep_train=12
+result_train=12
 regionnum=100
 # 设置X,Y数据集，以look_back2为准，取第一个和第二个为数组，形成data_X,取第三个作为预测值，形成data_Y,完成训练集的提取
 def create_dataset(dataset, look_back=timestep_train):

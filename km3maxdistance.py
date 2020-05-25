@@ -1,10 +1,10 @@
 import time
 
 import numpy as np
-# from helloword import cellnum
-from helloword import Region
-from helloword import User
-# from helloword import usernum
+# # from helloword import cellnum
+# from helloword import Region
+# from helloword import User
+# # from helloword import usernum
 import math
 import copy
 
@@ -107,10 +107,10 @@ class km():
                     for n in range(self.sumlackbike):
                         if self.visit_right[n]:
                             self.label_right[n] += d  # 所有访问过的男生增加期望值
-                    print("match_right", self.match_right)
-                    print("slack_right", self.slack_right)
-                    print("label_left", self.label_left)
-                    print("label_right", self.label_right)
+                    # print("match_right", self.match_right)
+                    # print("slack_right", self.slack_right)
+                    # print("label_left", self.label_left)
+                    # print("label_right", self.label_right)
 
 
 
@@ -125,7 +125,7 @@ class km():
             for i in range(self.sumlackbike):
                 self.slack_right = np.ones(max(self.usernum, self.sumlackbike)) * np.inf
                 while True:  #
-                    if (np.isnan(self.label_left[i])):
+                    if (self.label_left[i]==-np.inf):
                         break
                     self.visit_left = np.zeros(min(self.usernum, self.sumlackbike))
                     self.visit_right = np.zeros(max(self.usernum, self.sumlackbike))  # visit_right表示右边的缺车是否匹配
@@ -152,8 +152,8 @@ class km():
                     self.user[t][5]=self.adj[t][int(weight)][2]
                     self.user[t][6]=self.adj[t][int(weight)][3]
 
-        print("kmdistance",distance)
-        print("matchright",self.match_right)
+        # print("kmdistance",distance)
+        # print("matchright",self.match_right)
         return self.user
             # 求出所有的匹配的t好感度之和
         # 根据match_right[i]来确定用户和那一区域匹配
