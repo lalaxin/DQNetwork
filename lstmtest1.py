@@ -33,7 +33,7 @@ class lstm(nn.Module):
 userpredict=[[0 for i in range(regionnum)]for i in range(result_train)]
 
 # for t in range (100):
-data_csv=pd.read_excel('./regionminute10_15.xlsx',usecols=[24])
+data_csv=pd.read_excel('./regionminute10_15.xlsx',usecols=[14])
 # 数据预处理
 data_csv = data_csv.dropna()  # 滤除缺失数据
 dataset = data_csv.values   # 获得csv的值
@@ -43,7 +43,8 @@ max_value = np.max(dataset)  # 获得最大值
 min_value = np.min(dataset)  # 获得最小值
 scalar = max_value - min_value  # 获得间隔数量
 print("scaler",scalar)
-dataset = list(map(lambda x: x / scalar, dataset)) # 归一化
+if(scalar!=0):
+    dataset = list(map(lambda x: x / scalar, dataset)) # 归一化
 # 创建好输入输出[输入输出对，表示一组训练数据]
 data_X, data_Y = create_dataset(dataset)
 # 划分训练集和测试集，测试集为最后24个数据（一整天）前14天数据为训练数据

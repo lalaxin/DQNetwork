@@ -1,4 +1,6 @@
-
+"""
+时间间隔十分钟，8月15号8点到十点的数据
+"""
 
 
 import xlrd,xlwt
@@ -12,8 +14,8 @@ class getuser():
 
         # 获取excel的sheet表
         sheet = excel.sheet_by_name("Sheet2")
-        starttime = datetime.datetime(2016,8,15,0,00,00)
-        endtime = datetime.datetime(2016,8,15,0,10,00)
+        starttime = datetime.datetime(2016,8,15,8,00,00)
+        endtime = datetime.datetime(2016,8,15,8,10,00)
 
         # 统计截至日期
         deadday = datetime.datetime(2016, 8, 16, 0, 00, 00)
@@ -101,7 +103,7 @@ def getregion():
     for t in range(T):
         # print("user[t]",len(users[t]),users[t])
         init_region[t]=getuser().usertoregion(users[t],init_region[t],cell,celllength)
-        # print(init_region)
+        print(init_region)
 
 
     # print(region)
