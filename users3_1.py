@@ -10,15 +10,15 @@ import random
 class getuser():
     def getusers(self):
         # 打开需要操作的excel,由于地图左下角区域没有用户，所以不处理那些区域（原点定为（8000，7000））
-        excel = xlrd.open_workbook("./data3.xlsx")
+        excel = xlrd.open_workbook("./data4.xlsx")
 
         # 获取excel的sheet表
-        sheet = excel.sheet_by_name("Sheet2")
+        sheet = excel.sheet_by_name("Sheet1")
         starttime = datetime.datetime(2016,8,15,8,00,00)
         endtime = datetime.datetime(2016,8,15,8,10,00)
 
         # 统计截至日期
-        deadday = datetime.datetime(2016, 8, 16, 0, 00, 00)
+        deadday = datetime.datetime(2016, 8, 15, 10, 00, 00)
         onetime = []
         one = []
         user = []
@@ -31,7 +31,7 @@ class getuser():
             d = xlrd.xldate_as_datetime(row_i[0],0)
             # print(i,": ",row_i)
             onetime = []
-            if d > starttime and d <= endtime:
+            if d >= starttime and d <= endtime:
                 onetime.append(row_i[2])
                 onetime.append(row_i[4])
                 onetime.append(row_i[7])
@@ -65,7 +65,7 @@ class getuser():
                     # print(len(one))
                     # print("one:", one)
 
-                if starttime >= deadday:
+                if starttime > deadday:
                     d = xlrd.xldate_as_datetime(row_i[0], 0)
                     print("d:", d)
                     break
@@ -96,7 +96,7 @@ def getregion():
     # print(len(users))
     cell=10
     celllength=300
-    T=23
+    T=len(users)
 
     init_region=[[0 for i in range (cell*cell)]for t in range(T)]
     # print("initregion",init_region)
