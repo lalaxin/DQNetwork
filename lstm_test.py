@@ -1,6 +1,8 @@
 """
 从regionminute10_15.xlsx十分钟间隔数据中读取，用其预测15号8-10点的数据，将其存到region_1中
 """
+import math
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -113,7 +115,7 @@ for t in range (100):
         if(pred_result[i]<0):
             pred_result[i]=0
         else:
-            pred_result[i]=round(pred_result[i])
+            pred_result[i]=math.ceil(pred_result[i])
         userpredict[i][t]=pred_result[i]
 
     print("处理后的pred",pred_result)

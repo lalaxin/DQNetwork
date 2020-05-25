@@ -1,11 +1,13 @@
 """
-时间间隔十分钟，8月15号8点到十点的数据
+时间间隔十分钟，8月15号8点到10点的数据,存于data4.xlsx中
 """
 
 
 import xlrd,xlwt
 import datetime
 import random
+import numpy as np
+import pandas as pd
 
 class getuser():
     def getusers(self):
@@ -60,15 +62,28 @@ class getuser():
                     onetime.append(random.uniform(0, 200))
                     onetime.append(-1)
                     onetime.append(-1)
-                    # print("onetime:", onetime)
+                    print("onetime:", onetime)
                     one.append(onetime)
-                    # print(len(one))
-                    # print("one:", one)
+                    print(len(one))
+                    print("one:", one)
 
                 if starttime > deadday:
                     d = xlrd.xldate_as_datetime(row_i[0], 0)
                     print("d:", d)
                     break
+            if i==sheet.nrows-1:
+                user.append(one)
+        # init_user = np.array(user)
+        # data = pd.DataFrame(init_user)
+        # # 写入excel文件
+        # writer = pd.ExcelWriter("./user.xlsx")
+        # data.to_excel(writer, 'sheet1', float_format='%.5f')
+        # writer.save()
+        # writer.close()
+        # for i in range (len(user)):
+        #     print("每个时间段的user的个数",i,len(user[i]))
+        # print(len(user))
+
         return user
 
     def usertoregion(self,user,region,cell,celllength):
@@ -104,11 +119,18 @@ def getregion():
         # print("user[t]",len(users[t]),users[t])
         init_region[t]=getuser().usertoregion(users[t],init_region[t],cell,celllength)
         print(init_region)
+    init_region15 = np.array(init_region)
+    data = pd.DataFrame(init_region15)
+    # 写入excel文件
+    writer = pd.ExcelWriter("./user.xlsx")
+    data.to_excel(writer, 'sheet1', float_format='%.5f')
+    writer.save()
+    writer.close()
 
 
     # print(region)
 
-getregion()
+
 
 
 

@@ -9,7 +9,7 @@ import random
 import math
 import copy
 from ulpkm3maxdistance import ulpkm
-# from users import getuser
+from users3_1 import getuser
 
 from km2 import km
 # from helloword import matchregion
@@ -54,10 +54,11 @@ print("initregion",init_region)
 # 用户需求,T个时间段的用户需求# 定义用户数组（起点横坐标，起点纵坐标，终点横坐标，终点纵坐标，最大步行距离,期望停车区域横坐标，期望停车区域纵坐标）
 def init_user_demand():
 
-    userdemand=[[[0]for i in range (usernum)] for t in range (T)]
-    for t in range (T):
-        for i in range (usernum):
-            userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.uniform(0,2*celllength),-1,-1]
+    # userdemand=[[[0]for i in range (usernum)] for t in range (T)]
+    # for t in range (T):
+    #     for i in range (usernum):
+    #         userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.uniform(0,2*celllength),-1,-1]
+    userdemand=getuser().getusers()
     return userdemand
 # 初始化状态，直接根据region来初始化状态
 def init_state():
@@ -203,6 +204,8 @@ def run_this():
     sumreward=[]
     init_user = init_user_demand()
     init_s=init_state()
+    # 读取预测的文件存于一个数组中，用来计算缺车的数量
+
     for i_episode in range(EPISODE):
         # 初始化环境
         r=0
