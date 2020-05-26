@@ -91,8 +91,8 @@ class Net(nn.Module):
         # 我们只需将输入的特征数和输出的特征数传递给torch.nn.Linear类，就会自动生成对应维度的权重参数和偏置
         self.fc1 = nn.Linear(N_STATES, 512)
         self.fc1.weight.data.normal_(0, 0.1)   # initialization,权重初始化，利用正态进行初始化
-        self.fc2 = nn.Linear(512, 512)
-        self.fc2.weight.data.normal_(0, 0.1)
+        # self.fc2 = nn.Linear(512, 512)
+        # self.fc2.weight.data.normal_(0, 0.1)
         # 第二层神经网络，用于输出action
         self.out = nn.Linear(512, N_ACTIONS)
         self.out.weight.data.normal_(0, 0.1)   # initialization
@@ -209,11 +209,17 @@ def run_this():
     init_user = init_user_demand()
     init_s=init_state()
     # 读取预测的文件存于一个数组中，用来计算缺车的数量
-    predictregion=[]
-    excel = xlrd.open_workbook("./region_1.xlsx")
-    sheet = excel.sheet_by_name("sheet2")
+    # predictregion=[]
+    # excel = xlrd.open_workbook("./region_1.xlsx")
+    # sheet = excel.sheet_by_name("sheet2")
+    # for i in range(0, sheet.nrows):
+    #     predictregion.append(sheet.row_values(i))
+
+    predictuser = []
+    excel = xlrd.open_workbook("./user.xlsx")
+    sheet = excel.sheet_by_name("sheet1")
     for i in range(0, sheet.nrows):
-        predictregion.append(sheet.row_values(i))
+        predictuser.append(sheet.row_values(i))
 
     for i_episode in range(EPISODE):
         # 初始化环境
@@ -419,7 +425,7 @@ def run_this():
                 for i in range (regionnum):
                     region[i][1] = s_[i]
                     # 初始平衡状态下的车的数量
-                    region[i][0] =int(predictregion[t+1][i])
+                    region[i][0] =int(predictuser[t+1][i])
                     if(region[i][0]-region[i][1]>0):
                         region[i][2]=region[i][0]-region[i][1]
                     else:
