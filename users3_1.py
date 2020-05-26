@@ -59,7 +59,7 @@ class getuser():
                     onetime.append(row_i[4])
                     onetime.append(row_i[7])
                     onetime.append(row_i[9])
-                    onetime.append(random.uniform(0, 200))
+                    onetime.append(random.uniform(200,1000))
                     onetime.append(-1)
                     onetime.append(-1)
                     print("onetime:", onetime)
@@ -119,13 +119,13 @@ def getregion():
         # print("user[t]",len(users[t]),users[t])
         init_region[t]=getuser().usertoregion(users[t],init_region[t],cell,celllength)
         print(init_region)
-    init_region15 = np.array(init_region)
-    data = pd.DataFrame(init_region15)
-    # 写入excel文件
-    writer = pd.ExcelWriter("./user.xlsx")
-    data.to_excel(writer, 'sheet1', float_format='%.5f')
-    writer.save()
-    writer.close()
+    # init_region15 = np.array(init_region)
+    # data = pd.DataFrame(init_region15)
+    # # 写入excel文件
+    # writer = pd.ExcelWriter("./user.xlsx")
+    # data.to_excel(writer, 'sheet1', float_format='%.5f')
+    # writer.save()
+    # writer.close()
 
 
     # print(region)

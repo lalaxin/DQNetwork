@@ -13,10 +13,8 @@ import xlrd
 
 from ulpkm3maxdistance import ulpkm
 from users3_1 import getuser
-# from openpyxl import load_workbook
 
-# from km2 import km
-# from helloword import matchregion
+
 import matplotlib.pyplot as plt
 import time
 from torch.autograd import Variable
@@ -44,7 +42,7 @@ EPISODE=2000 #迭代次数
 # 记录损失
 loss=[]
 
-usernum=20 #用户数为10
+
 
 # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
 init_region = list()
@@ -91,12 +89,12 @@ class Net(nn.Module):
         # nn.Linear用于设置网络中的全连接层（全连接层的输入输出都是二维张量）nn.linear(in_features,out_features)in_features指size of input sample，out_features指size of output sample
         # 定义网络结构y=w*x+b weight[out_features,in_features],w,b是神经网络的参数，我们的目的就是不断更新神经网络的参数来优化目标函数
         # 我们只需将输入的特征数和输出的特征数传递给torch.nn.Linear类，就会自动生成对应维度的权重参数和偏置
-        self.fc1 = nn.Linear(N_STATES, 256)
+        self.fc1 = nn.Linear(N_STATES, 512)
         self.fc1.weight.data.normal_(0, 0.1)   # initialization,权重初始化，利用正态进行初始化
-        # self.fc2 = nn.Linear(124, 124)
-        # self.fc2.weight.data.normal_(0, 0.1)
+        self.fc2 = nn.Linear(512, 512)
+        self.fc2.weight.data.normal_(0, 0.1)
         # 第二层神经网络，用于输出action
-        self.out = nn.Linear(256, N_ACTIONS)
+        self.out = nn.Linear(512, N_ACTIONS)
         self.out.weight.data.normal_(0, 0.1)   # initialization
 
     # 执行数据的流动
@@ -216,12 +214,6 @@ def run_this():
     sheet = excel.sheet_by_name("sheet2")
     for i in range(0, sheet.nrows):
         predictregion.append(sheet.row_values(i))
-    # 假设已知用户数据
-    predictuser=[]
-    excel = xlrd.open_workbook("./user.xlsx")
-    sheet = excel.sheet_by_name("sheet1")
-    for i in range(0, sheet.nrows):
-        predictuser.append(sheet.row_values(i))
 
     for i_episode in range(EPISODE):
         # 初始化环境
@@ -427,7 +419,7 @@ def run_this():
                 for i in range (regionnum):
                     region[i][1] = s_[i]
                     # 初始平衡状态下的车的数量
-                    region[i][0] =int(predictuser[t+1][i])
+                    region[i][0] =int(predictregion[t+1][i])
                     if(region[i][0]-region[i][1]>0):
                         region[i][2]=region[i][0]-region[i][1]
                     else:

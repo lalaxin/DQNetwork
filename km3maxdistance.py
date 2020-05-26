@@ -26,7 +26,7 @@ class km():
         for i in range(len(self.region)):
             if (self.region[i][2] > 0):
                 self.sumlackbike += self.region[i][2]
-        self.adj = [[0 for i in range(self.sumlackbike)] for i in range(self.usernum)]
+        self.adj = [[0 for i in range(int(self.sumlackbike))] for i in range(int(self.usernum))]
         for i in range(self.usernum):
             a = 0
             for j in range(len(self.region)):
