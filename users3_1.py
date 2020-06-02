@@ -38,7 +38,8 @@ class getuser():
                 onetime.append(row_i[4])
                 onetime.append(row_i[7])
                 onetime.append(row_i[9])
-                onetime.append(random.uniform(0,200))
+                onetime.append(random.uniform(200,1000))
+                # onetime.append(10000)
                 onetime.append(-1)
                 onetime.append(-1)
                 one.append(onetime)
@@ -59,17 +60,18 @@ class getuser():
                     onetime.append(row_i[4])
                     onetime.append(row_i[7])
                     onetime.append(row_i[9])
-                    onetime.append(random.uniform(200,1000))
+                    onetime.append(random.uniform(200, 1000))
+                    # onetime.append(10000)
                     onetime.append(-1)
                     onetime.append(-1)
-                    print("onetime:", onetime)
+                    # print("onetime:", onetime)
                     one.append(onetime)
                     print(len(one))
-                    print("one:", one)
+                    # print("one:", one)
 
                 if starttime > deadday:
                     d = xlrd.xldate_as_datetime(row_i[0], 0)
-                    print("d:", d)
+                    # print("d:", d)
                     break
             if i==sheet.nrows-1:
                 user.append(one)
@@ -80,9 +82,13 @@ class getuser():
         # data.to_excel(writer, 'sheet1', float_format='%.5f')
         # writer.save()
         # writer.close()
-        # for i in range (len(user)):
-        #     print("每个时间段的user的个数",i,len(user[i]))
-        # print(len(user))
+
+
+        temp=0
+        for i in range (len(user)):
+            temp+=len(user[i])
+            print("每个时间段的user的个数",i,len(user[i]))
+        print("len(user)",temp)
 
         return user
 
@@ -119,17 +125,17 @@ def getregion():
         # print("user[t]",len(users[t]),users[t])
         init_region[t]=getuser().usertoregion(users[t],init_region[t],cell,celllength)
         print(init_region)
-    # init_region15 = np.array(init_region)
-    # data = pd.DataFrame(init_region15)
-    # # 写入excel文件
-    # writer = pd.ExcelWriter("./user.xlsx")
-    # data.to_excel(writer, 'sheet1', float_format='%.5f')
-    # writer.save()
-    # writer.close()
+    init_region15 = np.array(init_region)
+    data = pd.DataFrame(init_region15)
+    # 写入excel文件
+    writer = pd.ExcelWriter("./userregion.xlsx")
+    data.to_excel(writer, 'sheet1', float_format='%.5f')
+    writer.save()
+    writer.close()
 
 
     # print(region)
-
+# getregion()
 
 
 

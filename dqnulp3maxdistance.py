@@ -8,7 +8,7 @@ import numpy as np
 import random
 import math
 import copy
-from ulpkm3maxdistance import ulpkm
+from ULPkm import ulpkm
 # from users import getuser
 
 from km2 import km
@@ -22,7 +22,7 @@ random.seed(1)
 BATCH_SIZE = 128
 
 
-LR = 0.0001             # learning rate
+LR = 0.00001             # learning rate
 EPSILON = 0               # greedy policy
 GAMMA = 0.99                 # reward discount
 TARGET_REPLACE_ITER = 80   # target update frequency
@@ -30,7 +30,7 @@ MEMORY_CAPACITY =4000
 
 # 参数设置
 T=10 #时间时段
-RB=500#预算约束
+RB=5000000#预算约束
 # 横向网格数
 cell=4
 # 单个网格长度
@@ -40,20 +40,21 @@ EPISODE=1000 #迭代次数
 # 记录损失
 loss=[]
 
-usernum=20 #用户数为10
+usernum=12 #用户数为10
 
 # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
 init_region = list()
 number=0
+region0=[0,0,0,1,0,0,0,1,2,0,2,2,1,0,2,1]
 for i in range(regionnum):
     # print(i)
-    regionn =[0,random.randint(0,2),0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
+    regionn =[0,region0[i],0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
     # print(r)
     init_region.append(regionn)
     number += regionn[1]
     # print(region)
 print("initregion",init_region)
-
+print("number",number)
 
 # 用户需求,T个时间段的用户需求# 定义用户数组（起点横坐标，起点纵坐标，终点横坐标，终点纵坐标，最大步行距离,期望停车区域横坐标，期望停车区域纵坐标）
 def init_user_demand():
@@ -61,7 +62,7 @@ def init_user_demand():
     userdemand=[[[0]for i in range (usernum)] for t in range (T)]
     for t in range (T):
         for i in range (usernum):
-            userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.uniform(0,2*celllength),-1,-1]
+            userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.uniform(0,celllength*1.4),-1,-1]
     return userdemand
 # 初始化状态，直接根据region来初始化状态
 def init_state():
@@ -129,7 +130,7 @@ class DQN(object):
         # floattensor是pytorch的基本变量类型,torch.FloatTensor(x)是将x转换成该类型
         observation = torch.unsqueeze(torch.FloatTensor(observation), 0)
         if (self.EPSILON < 0.9):
-            self.EPSILON += 0.001
+            self.EPSILON += 0.0001
         # 这里只输入一个sample
         if np.random.uniform() < self.EPSILON:   # greedy
             # print("self.Epsion",self.EPSILON)
@@ -197,9 +198,6 @@ class greedy():
         # 再根据非线性优化计算得到改时间段的d
         # 再计算所有时间段的d之和
 
-
-
-
 def run_this():
     dqn = DQN()
     print('\nCollecting experience...')
@@ -225,12 +223,16 @@ def run_this():
         preremoveregion=list()
         tempremove = list()
 
+
         for t in range (T):
             # 由于用户的骑行时间一般为十分钟，每十分钟处理一次用户，自行车还车是一个阶段
             # 进入下一个时间槽后，将当前状态的用户数以及下一状态的用户还车位置都清0
+            # print(user[1])
             for i in range (regionnum):
                 s[regionnum + i] = 0
                 s_[2 * regionnum + i] = 0
+                region[i][0]=0
+
                 # preregion[i][1]=s[i]
             preuser=copy.deepcopy(user[t])
 
@@ -264,6 +266,8 @@ def run_this():
                             preremoveregion.append(tempa)
                         else:
                             preregion[tempa][1]-=1
+
+
             neighborregion=[-1,cell,1,-cell,cell-1,cell+1,-cell-1,-cell+1,-2,2*cell,+2,-2*cell]
             # removeuserreggion=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
             #(调度后)考虑用户当前区域没车到周围区域骑车的情况（以用户的起点为圆心，最大步行距离为半径画圆）
@@ -363,14 +367,17 @@ def run_this():
             for i in range (len(tempremove)):
                 preremove.remove(tempremove[i])
             del tempremove[:]
-            for i in range(len(removeuser)):
-                # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),这个惩罚算的是调度时那个阶段的
-                #         将没有骑到车的无效用户移除
-                user[t].remove(removeuser[i])
+
             for i in range(len(preremove)):
                 # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),这个惩罚算的是调度时那个阶段的
                 #         将没有骑到车的无效用户移除
                 preuser.remove(preremove[i])
+            for i in range(len(removeuser)):
+                # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),这个惩罚算的是调度时那个阶段的
+                #         将没有骑到车的无效用户移除
+                user[t].remove(removeuser[i])
+
+
 
             if(t!=0):
                 if(len(preremove)==0 and len(removeuser)==0):
@@ -379,6 +386,14 @@ def run_this():
                     r=-1
                 else:
                     r=(len(preremove)-len(removeuser))/len(preremove)
+                if(r<0):
+                    # user[t] [[6, 8, 5, 10, 2.2441861840702186, -1, -1], [12, 8, 3, 1, 3.0469537822133437, -1, -1], [1, 2, 2, 2, 3.826148690733884, -1, -1], [3, 4, 12, 5, 2.5208770865554477, -1, -1], [4, 5, 5, 5, 0.4784342320494666, -1, -1], [3, 9, 12, 11, 3.7265134398112427, -1, -1], [2, 9, 8, 12, 0.437954991661377, -1, -1], [0, 6, 1, 6, 3.637907100939602, -1, -1], [12, 2, 2, 5, 0.48169532108143925, -1, -1], [9, 12, 6, 1, 2.3972824075158976, -1, -1], [3, 9, 1, 4, 1.532545576551751, -1, -1], [4, 9, 8, 1, 1.9226308879732301, -1, -1]]
+                    # region [[0, 0, 0, 1.5, 1.5], [0, 0, 1, 4.5, 1.5], [0, 0, 0, 7.5, 1.5], [0, 0, 0, 10.5, 1.5], [0, 0, 1, 1.5, 4.5], [0, 0, 0, 4.5, 4.5], [0, 0, 0, 7.5, 4.5], [0, 0, 1, 10.5, 4.5], [0, 0, 0, 1.5, 7.5], [0, 0, 1, 4.5, 7.5], [0, 0, 2, 7.5, 7.5], [0, 0, 1, 10.5, 7.5], [0, 0, 3, 1.5, 10.5], [0, 0, 1, 4.5, 10.5], [0, 0, 0, 7.5, 10.5], [0, 0, 1, 10.5, 10.5]]
+                    #  24 2281.9104000000048 -0.14285714285714285
+                    print("len(user[t])", len(user[t-1]))
+                    print("user[t]", user[t-1])
+                    print("缺车区域：", i_episode, region)
+
                 print("len(remove).len(preremove)", len(removeuser), len(preremove))
                 print("action,RB_t,r", action, RB_t, r)
 
@@ -392,6 +407,10 @@ def run_this():
             # 用户取车后的状态+用户还车的区域即为preregion，preregion用于下一阶段计算用户的缺车情况
             for i in range (regionnum):
                 preregion[i][1]=s_[i]
+            # temppre=0
+            # for i in range (regionnum):
+            #     temppre+=preregion[i][1]
+            # print ("还车前pregion",temppre)
 
             # 计算用户的本来还车区域(还要计算离开的用户)
             for i in range(len(user[t])):
@@ -399,32 +418,49 @@ def run_this():
                     tempa = int(cell * cell - 1)
                 elif (user[t][i][2] == cell * celllength):
                     tempa = int(user[t][i][3] / celllength) * cell + int(user[t][i][2] / celllength) - 1
-                elif (user[t][i][1] == cell * celllength):
+                elif (user[t][i][3] == cell * celllength):
                     tempa = int(user[t][i][3] / celllength) * cell + int(user[t][i][2] / celllength) - cell
                 else:
                     tempa = int(user[t][i][3] / celllength) * cell + int(user[t][i][2] / celllength)
                 if (tempa < cell * cell):
                     preregion[tempa][1]+=1
+
+            temppre = 0
+            # for i in range(regionnum):
+            #     temppre += preregion[i][1]
+            # print("还车后pregion", temppre)
+            # print("preregion",preregion)
             # 根据当前的preregion来用户本来的缺车数
 
             # 更新region来生成重平衡任务,求得缺车数
+            # for i in range (regionnum):
+            #     region[i][1] = s_[i]
+            #     # 初始平衡状态下的车的数量
+            #     region[i][0] = init_s[i]
+            #     if(region[i][0]-region[i][1]>0):
+            #         region[i][2]=region[i][0]-region[i][1]
+            #     else:
+            #         region[i][2]=0
+            # 使用用户下个时间段到来的信息作为调度指标
+            if(t!=T-1):
+                for i in range(len(user[t+1])):
+                    if (user[t+1][i][0] == cell * celllength and user[t+1][i][1] == cell * celllength):
+                        tempa = int(cell * cell - 1)
+                    elif (user[t+1][i][0] == cell * celllength):
+                        tempa = int(user[t+1][i][1] / celllength) * cell + int(user[t+1][i][0] / celllength) - 1
+                    elif (user[t+1][i][1] == cell * celllength):
+                        tempa = int(user[t+1][i][1] / celllength) * cell + int(user[t+1][i][0] / celllength) - cell
+                    else:
+                        tempa = int(user[t+1][i][1] / celllength) * cell + int(user[t+1][i][0] / celllength)
+                    if (tempa < cell * cell):
+                        region[tempa][0]+=1
             for i in range (regionnum):
-                region[i][1] = s_[i]
-                # 初始平衡状态下的车的数量
-                region[i][0] = init_s[i]
+                region[i][1]=s_[i]
                 if(region[i][0]-region[i][1]>0):
                     region[i][2]=region[i][0]-region[i][1]
                 else:
                     region[i][2]=0
-                # s[2*regionnum + i]=region[i][2]
-            # if (t != 0):
-            #     r = -len(removeuser)
-            #     print("action,RB_t,r", action, RB_t,r)
-            #     dqn.store_transition(s0, action, r, s)
-            #     # s首先需要存储记忆，记忆库中有一些东西之后才能学习（前200步都是在存储记忆,大于200之后每5步学习一次）
-            #     if dqn.memory_counter > MEMORY_CAPACITY:
-            #         dqn.learn()
-            #     sum_r += r
+
 
 
             # print(dqn.eval_net.fc1.weight)
@@ -459,7 +495,8 @@ def run_this():
                     # 得到上一阶段的用户还车地点来更新s_
                     if (tempb <= cell * cell):
                         s_[tempb] += 1
-
+                        s_[2*regionnum+tempb]+=1
+            # print("s_",s_)
                 # balancer = tempfit
 
 

@@ -1,5 +1,6 @@
 """
-考虑用户圆形区域取车，当前区域取车奖励为1，然后依次递减
+注意user3_1的最大步行距离变了
+假设已知用户需求，并且无步行限制的情况，只在当前区域取车
 """
 import torch
 import torch.nn as nn
@@ -31,8 +32,8 @@ TARGET_REPLACE_ITER = 80   # target update frequency
 MEMORY_CAPACITY =4000
 
 # 参数设置
-T=10 #时间时段
-RB=500#预算约束
+T=12#时间时段
+RB=5000000#预算约束
 # 横向网格数
 cell=10
 # 单个网格长度
@@ -46,15 +47,18 @@ loss=[]
 
 # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
 init_region = list()
-for i in range(regionnum):
-    # print(i)
-    temp=0
-    regionn =[0,random.randint(0,5),0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
-    temp+=regionn[1]
-    # print(r)
-    init_region.append(regionn)
-    # print(region)
-print("车总数",temp)
+def init_region2():
+    userregion = []
+    excel = xlrd.open_workbook("./userregion.xlsx")
+    sheet = excel.sheet_by_name("sheet1")
+    userregion=sheet.row_values(sheet.nrows-1)
+    print("userregion",userregion)
+    for i in range(regionnum):
+        regionn =[0,int(userregion[i]*99/539)+1,0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
+        # print(r)
+        init_region.append(regionn)
+        # print(region)
+init_region2()
 # 用户需求,T个时间段的用户需求# 定义用户数组（起点横坐标，起点纵坐标，终点横坐标，终点纵坐标，最大步行距离,期望停车区域横坐标，期望停车区域纵坐标）
 def init_user_demand():
 
@@ -277,9 +281,13 @@ def run_this():
                             preremoveregion.append(tempa)
                         else:
                             preregion[tempa][1]-=1
+
+
+
+
             neighborregion=[-1,cell,1,-cell,cell-1,cell+1,-cell-1,-cell+1,-2,2*cell,+2,-2*cell]
             # removeuserreggion=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
-            #(调度后)考虑用户当前区域没车到周围区域骑车的情况（以用户的起点为圆心，最大步行距离为半径画圆）
+            # (调度后)考虑用户当前区域没车到周围区域骑车的情况（以用户的起点为圆心，最大步行距离为半径画圆）
             if(len(removeuser)!=0):
                 for i in range (len(removeuser)):
                     for j, neighbor in enumerate(neighborregion):
@@ -376,14 +384,19 @@ def run_this():
             for i in range (len(tempremove)):
                 preremove.remove(tempremove[i])
             del tempremove[:]
+
+
+
+
             for i in range(len(removeuser)):
                 # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),这个惩罚算的是调度时那个阶段的
                 #         将没有骑到车的无效用户移除
                 user[t].remove(removeuser[i])
-            for i in range(len(preremove)):
-                # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),这个惩罚算的是调度时那个阶段的
-                #         将没有骑到车的无效用户移除
-                preuser.remove(preremove[i])
+            # for i in range(len(preremove)):
+            #     # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),这个惩罚算的是调度时那个阶段的
+            #     #         将没有骑到车的无效用户移除
+            #     preuser.remove(preremove[i])
+
 
             if(t!=0 and t!=T-1):
                 if(len(preremove)==0 and len(removeuser)==0):
@@ -402,6 +415,7 @@ def run_this():
                     dqn.learn()
                 sum_r += r
 
+            print("len(user(t))", len(user[t]))
             # 用户取车后的状态+用户还车的区域即为preregion，preregion用于下一阶段计算用户的缺车情况
             for i in range (regionnum):
                 preregion[i][1]=s_[i]
@@ -445,6 +459,8 @@ def run_this():
             action = dqn.choose_action(s)
             RB_t = (action / N_ACTIONS) * s[3 * regionnum]
 
+            RB_t=100000
+
             # print("usert", len(user[t]), user[t])
             # 计算sumlackbike
             sumlackbike = 0
@@ -473,7 +489,7 @@ def run_this():
                     # 得到上一阶段的用户还车地点来更新s_
                     if (tempb <= cell * cell):
                         s_[tempb] += 1
-                        s_[2*regionnum+temp]+=1
+                        s_[2*regionnum+tempb]+=1
 
                 # balancer = tempfit
 

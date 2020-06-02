@@ -15,11 +15,13 @@ import numpy as np
 import random
 import math
 import copy
-from ULPkm import ulpkm
-from users import getuser
 
-from km2 import km
-from helloword import matchregion
+import xlrd
+
+from ULPkm import ulpkm
+from users3_1 import getuser
+
+
 import matplotlib.pyplot as plt
 import time
 # import gym
@@ -53,20 +55,25 @@ usernum=10 #用户数为10
 
 # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
 init_region = list()
-for i in range(regionnum):
-    # print(i)
-    regionn =[0,random.randint(1,5),0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
-    # print(r)
-    init_region.append(regionn)
-    # print(region)
-print("initregion",init_region)
+def init_region2():
+    userregion = []
+    excel = xlrd.open_workbook("./userregion2.xlsx")
+    sheet = excel.sheet_by_name("sheet1")
+    userregion=sheet.row_values(sheet.nrows-1)
+    for i in range(regionnum):
+        regionn =[0,int(userregion[i]),0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
+        # print(r)
+        init_region.append(regionn)
+        # print(region)
 # 用户需求,T个时间段的用户需求# 定义用户数组（起点横坐标，起点纵坐标，终点横坐标，终点纵坐标，最大步行距离,期望停车区域横坐标，期望停车区域纵坐标）
+init_region2()
 def init_user_demand():
 
-    userdemand=[[[0]for i in range (usernum)] for t in range (T)]
-    for t in range (T):
-        for i in range (usernum):
-            userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),celllength*cell,-1,-1]
+    # userdemand=[[[0]for i in range (usernum)] for t in range (T)]
+    # for t in range (T):
+    #     for i in range (usernum):
+    #         userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.uniform(0,2*celllength),-1,-1]
+    userdemand=getuser().getusers()
     return userdemand
 # 初始化状态，直接根据region来初始化状态
 def init_state():

@@ -34,7 +34,7 @@ MEMORY_CAPACITY =5000
 
 # 参数设置
 T=10 #时间时段
-RB=500#预算约束
+RB=5000000#预算约束
 # 横向网格数
 cell=10
 # 单个网格长度
@@ -48,16 +48,18 @@ usernum=20 #用户数为10
 
 # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
 init_region = list()
-for i in range(regionnum):
-    # print(i)
-    temp=0
-    regionn =[0,random.randint(0,5),0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
-    temp+=regionn[1]
-    # print(r)
-    init_region.append(regionn)
-    # print(region)
-print("车总数",temp)
+def init_region2():
+    userregion = []
+    excel = xlrd.open_workbook("./userregion2.xlsx")
+    sheet = excel.sheet_by_name("sheet1")
+    userregion=sheet.row_values(sheet.nrows-1)
+    for i in range(regionnum):
+        regionn =[0,int(userregion[i]*99/539),0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
+        # print(r)
+        init_region.append(regionn)
+        # print(region)
 # 用户需求,T个时间段的用户需求# 定义用户数组（起点横坐标，起点纵坐标，终点横坐标，终点纵坐标，最大步行距离,期望停车区域横坐标，期望停车区域纵坐标）
+init_region2()
 def init_user_demand():
 
     # userdemand=[[[0]for i in range (usernum)] for t in range (T)]
@@ -475,7 +477,7 @@ def run_this():
                     # 得到上一阶段的用户还车地点来更新s_
                     if (tempb <= cell * cell):
                         s_[tempb] += 1
-                        s_[2*regionnum+temp]+=1
+                        s_[2*regionnum+tempb]+=1
 
                 # balancer = tempfit
 
