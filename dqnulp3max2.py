@@ -412,7 +412,7 @@ def run_this():
 
             # 计算用户的本来还车区域(还要计算离开的用户)
             for i in range(len(user[t])):
-                if (user[t][i][2] == cell * celllength and user[t][i][1] == cell * celllength):
+                if (user[t][i][2] == cell * celllength and user[t][i][3] == cell * celllength):
                     tempa = int(cell * cell - 1)
                 elif (user[t][i][2] == cell * celllength):
                     tempa = int(user[t][i][3] / celllength) * cell + int(user[t][i][2] / celllength) - 1

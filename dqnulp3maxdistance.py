@@ -1,5 +1,6 @@
 """
 考虑用户圆形区域取车，即周围区域，临近区域的中心点在步行距离范围内时，可取车
+两个用户，两个缺车，给用户匹配缺车区域时考虑用户的最大步行距离
 """
 import torch
 import torch.nn as nn
@@ -8,7 +9,8 @@ import numpy as np
 import random
 import math
 import copy
-from ULPkm import ulpkm
+from ulpkm3maxdistance import ulpkm
+# from ULPkm import ulpkm
 # from users import getuser
 
 from km2 import km
@@ -19,33 +21,33 @@ from torch.autograd import Variable
 
 random.seed(1)
 # Hyper Parameters
-BATCH_SIZE = 128
+BATCH_SIZE = 32
 
 
-LR = 0.00001             # learning rate
+LR = 0.001             # learning rate
 EPSILON = 0               # greedy policy
-GAMMA = 0.99                 # reward discount
-TARGET_REPLACE_ITER = 80   # target update frequency
+GAMMA = 0.9                 # reward discount
+TARGET_REPLACE_ITER = 100   # target update frequency
 MEMORY_CAPACITY =4000
 
 # 参数设置
 T=10 #时间时段
-RB=5000000#预算约束
+RB=500#预算约束
 # 横向网格数
-cell=4
+cell=2
 # 单个网格长度
 celllength=3
 regionnum=cell*cell #区域个数
-EPISODE=1000 #迭代次数
+EPISODE=3000 #迭代次数
 # 记录损失
 loss=[]
 
-usernum=12 #用户数为10
+usernum=2 #用户数为10
 
 # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
 init_region = list()
 number=0
-region0=[0,0,0,1,0,0,0,1,2,0,2,2,1,0,2,1]
+region0=[1,0,1,0,0,0,0,1,2,0,2,2,1,0,2,1]
 for i in range(regionnum):
     # print(i)
     regionn =[0,region0[i],0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
@@ -62,8 +64,10 @@ def init_user_demand():
     userdemand=[[[0]for i in range (usernum)] for t in range (T)]
     for t in range (T):
         for i in range (usernum):
-            userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.uniform(0,celllength*1.4),-1,-1]
+            userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.uniform(celllength*0.7,celllength*2.1),-1,-1]
+    print("userdemand",userdemand)
     return userdemand
+
 # 初始化状态，直接根据region来初始化状态
 def init_state():
     #状态应包含这一时间段每个区域的（第二个regionnum）用户数，(第1个regionnum)车的供应数以及下一阶段该区域的缺车数（第三个regionnum）
@@ -89,12 +93,14 @@ class Net(nn.Module):
         # nn.Linear用于设置网络中的全连接层（全连接层的输入输出都是二维张量）nn.linear(in_features,out_features)in_features指size of input sample，out_features指size of output sample
         # 定义网络结构y=w*x+b weight[out_features,in_features],w,b是神经网络的参数，我们的目的就是不断更新神经网络的参数来优化目标函数
         # 我们只需将输入的特征数和输出的特征数传递给torch.nn.Linear类，就会自动生成对应维度的权重参数和偏置
-        self.fc1 = nn.Linear(N_STATES, 256)
+        self.fc1 = nn.Linear(N_STATES, 100)
         self.fc1.weight.data.normal_(0, 0.1)   # initialization,权重初始化，利用正态进行初始化
-        # self.fc2 = nn.Linear(124, 124)
-        # self.fc2.weight.data.normal_(0, 0.1)
+        self.fc2 = nn.Linear(100, 100)
+        self.fc2.weight.data.normal_(0, 0.1)
+        # self.fc3 = nn.Linear(128, 128)
+        # self.fc3.weight.data.normal_(0, 0.1)
         # 第二层神经网络，用于输出action
-        self.out = nn.Linear(256, N_ACTIONS)
+        self.out = nn.Linear(100, N_ACTIONS)
         self.out.weight.data.normal_(0, 0.1)   # initialization
 
     # 执行数据的流动
@@ -380,12 +386,13 @@ def run_this():
 
 
             if(t!=0):
-                if(len(preremove)==0 and len(removeuser)==0):
-                    r=1
-                elif(len(preremove)==0 and len(removeuser)!=0):
-                    r=-1
-                else:
-                    r=(len(preremove)-len(removeuser))/len(preremove)
+                if(sumlackbike!=0 and len(user[t-1])!=0):
+                    if(len(preremove)==0 and len(removeuser)==0):
+                        r=0
+                    elif(len(preremove)==0 and len(removeuser)!=0):
+                        r=-1
+                    else:
+                        r=(len(preremove)-len(removeuser))/len(preremove)
                 if(r<0):
                     # user[t] [[6, 8, 5, 10, 2.2441861840702186, -1, -1], [12, 8, 3, 1, 3.0469537822133437, -1, -1], [1, 2, 2, 2, 3.826148690733884, -1, -1], [3, 4, 12, 5, 2.5208770865554477, -1, -1], [4, 5, 5, 5, 0.4784342320494666, -1, -1], [3, 9, 12, 11, 3.7265134398112427, -1, -1], [2, 9, 8, 12, 0.437954991661377, -1, -1], [0, 6, 1, 6, 3.637907100939602, -1, -1], [12, 2, 2, 5, 0.48169532108143925, -1, -1], [9, 12, 6, 1, 2.3972824075158976, -1, -1], [3, 9, 1, 4, 1.532545576551751, -1, -1], [4, 9, 8, 1, 1.9226308879732301, -1, -1]]
                     # region [[0, 0, 0, 1.5, 1.5], [0, 0, 1, 4.5, 1.5], [0, 0, 0, 7.5, 1.5], [0, 0, 0, 10.5, 1.5], [0, 0, 1, 1.5, 4.5], [0, 0, 0, 4.5, 4.5], [0, 0, 0, 7.5, 4.5], [0, 0, 1, 10.5, 4.5], [0, 0, 0, 1.5, 7.5], [0, 0, 1, 4.5, 7.5], [0, 0, 2, 7.5, 7.5], [0, 0, 1, 10.5, 7.5], [0, 0, 3, 1.5, 10.5], [0, 0, 1, 4.5, 10.5], [0, 0, 0, 7.5, 10.5], [0, 0, 1, 10.5, 10.5]]
@@ -395,7 +402,8 @@ def run_this():
                     print("缺车区域：", i_episode, region)
 
                 print("len(remove).len(preremove)", len(removeuser), len(preremove))
-                print("action,RB_t,r", action, RB_t, r)
+                print("action,RB_t,r", action,"RB_t", RB_t,"r", r)
+                # print("action",action)
 
                 # print("user(t)",user[t])
                 dqn.store_transition(s0, action, r, s)
@@ -414,7 +422,7 @@ def run_this():
 
             # 计算用户的本来还车区域(还要计算离开的用户)
             for i in range(len(user[t])):
-                if (user[t][i][2] == cell * celllength and user[t][i][1] == cell * celllength):
+                if (user[t][i][2] == cell * celllength and user[t][i][3] == cell * celllength):
                     tempa = int(cell * cell - 1)
                 elif (user[t][i][2] == cell * celllength):
                     tempa = int(user[t][i][3] / celllength) * cell + int(user[t][i][2] / celllength) - 1
@@ -425,12 +433,7 @@ def run_this():
                 if (tempa < cell * cell):
                     preregion[tempa][1]+=1
 
-            temppre = 0
-            # for i in range(regionnum):
-            #     temppre += preregion[i][1]
-            # print("还车后pregion", temppre)
-            # print("preregion",preregion)
-            # 根据当前的preregion来用户本来的缺车数
+
 
             # 更新region来生成重平衡任务,求得缺车数
             # for i in range (regionnum):
@@ -466,6 +469,7 @@ def run_this():
             # print(dqn.eval_net.fc1.weight)
             action = dqn.choose_action(s)
             RB_t = (action / N_ACTIONS) * s[3 * regionnum]
+            # RB_t=5000000
 
             # print("usert", len(user[t]), user[t])
             # 计算sumlackbike
@@ -477,7 +481,8 @@ def run_this():
 
             # 当有不缺车的情况发生时，会有很大奖励
             # 执行重平衡任务，来得到用户的还车地点
-            if(user[t]!=0):
+            # print("len(user[t])",len(user[t]))
+            if(len(user[t])!=0 and sumlackbike!=0):
                 ulp1 = ulpkm(user=user[t], region=region, pB=1, k=100, B=RB_t, cell=cell, celllength=celllength)
                 tempuser, tempfit = ulp1.run()
                 # tempuser为各个用户的终点，tempfit为最小d
@@ -496,6 +501,11 @@ def run_this():
                     if (tempb <= cell * cell):
                         s_[tempb] += 1
                         s_[2*regionnum+tempb]+=1
+            # 没有缺车的情况
+            elif(sumlackbike==0):
+                r=1
+            else:
+                r=0
             # print("s_",s_)
                 # balancer = tempfit
 

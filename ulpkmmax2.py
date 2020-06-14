@@ -1,3 +1,7 @@
+"""
+不考虑用户本来骑车的影响，即只根据用户的步行距离来计算支付预算
+"""
+
 from scipy import optimize as opt
 import numpy as np
 from scipy.optimize import minimize
@@ -40,7 +44,7 @@ class ulpkm:
                     math.pow((self.user[i][0] - x[2 * i]), 2) + math.pow((self.user[i][1] - x[2 * i + 1]), 2))  # 起点到实际位置
                 larrlact = math.sqrt(
                     math.pow((x[2 * i] - self.user[i][2]), 2) + math.pow((x[2 * i + 1] - self.user[i][3]), 2))
-                self.pi[i] = self.pB * (lslact - lslarr) + self.k * (larrlact) * (larrlact)
+                self.pi[i] = self.k * (larrlact) * (larrlact)
                 if (self.pi[i] < 0):
                     self.pi[i] = 0
             # 匹配未成功，用户无需匹配，直接归还到目的地

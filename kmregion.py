@@ -54,7 +54,6 @@ class km():
 
 
         # 有可能出现usernum或sumlackbike为0的情况
-        # print("sumlackbike", self.sumlackbike)
 
 
         self.label_left=np.max(self.adj_matrix,axis=1) # 取大函数，axis=1表示横向
@@ -64,7 +63,7 @@ class km():
         self.visit_right=np.zeros(max(self.usernum,self.sumlackbike)) # visit_right表示右边的缺车是否匹配
         self.slack_right=np.ones(max(self.usernum,self.sumlackbike))*np.inf # np.inf表示最大的正数,记录每个汉子如果能被妹子倾心最少还需要多少期望值
 
-
+        # print("usernum", usernum, "sumlackbike", self.sumlackbike)
 
 
     # 寻找增广路，深度优先
