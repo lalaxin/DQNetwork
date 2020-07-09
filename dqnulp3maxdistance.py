@@ -31,10 +31,10 @@ TARGET_REPLACE_ITER = 100   # target update frequency
 MEMORY_CAPACITY =4000
 
 # 参数设置
-T=10 #时间时段
-RB=500#预算约束
+T=50 #时间时段
+RB=50000#预算约束
 # 横向网格数
-cell=2
+cell=5
 # 单个网格长度
 celllength=3
 regionnum=cell*cell #区域个数
@@ -42,21 +42,21 @@ EPISODE=3000 #迭代次数
 # 记录损失
 loss=[]
 
-usernum=2 #用户数为10
+usernum=70 #用户数为10
 
 # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
 init_region = list()
-number=0
+# number=0
 region0=[1,0,1,0,0,0,0,1,2,0,2,2,1,0,2,1]
 for i in range(regionnum):
     # print(i)
-    regionn =[0,region0[i],0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
+    regionn =[0,0,0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
     # print(r)
     init_region.append(regionn)
-    number += regionn[1]
+    # number += regionn[1]
     # print(region)
-print("initregion",init_region)
-print("number",number)
+
+# print("number",number)
 
 # 用户需求,T个时间段的用户需求# 定义用户数组（起点横坐标，起点纵坐标，终点横坐标，终点纵坐标，最大步行距离,期望停车区域横坐标，期望停车区域纵坐标）
 def init_user_demand():
@@ -67,6 +67,28 @@ def init_user_demand():
             userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.uniform(celllength*0.7,celllength*2.1),-1,-1]
     print("userdemand",userdemand)
     return userdemand
+init_user=init_user_demand()
+
+# 计算用户的初始区域
+def init_user_region():
+    number=0
+    for i in range(len(init_user[0])):
+        if (init_user[0][i][0] == cell * celllength and init_user[0][i][1] == cell * celllength):
+            tempa = int(cell * cell - 1)
+        elif (init_user[0][i][0] == cell * celllength):
+            tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength) - 1
+        elif (init_user[0][i][1] == cell * celllength):
+            tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength) - cell
+        else:
+            tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength)
+        if (tempa < cell * cell):
+            init_region[tempa][1]+=1
+    for i in range(regionnum):
+        number += init_region[i][1]
+    print("number",number)
+init_user_region()
+print("initregion",init_region)
+
 
 # 初始化状态，直接根据region来初始化状态
 def init_state():
@@ -210,7 +232,7 @@ def run_this():
     # run this
     sumreward=[]
     ll=[]
-    init_user = init_user_demand()
+    # init_user = init_user_demand()
     init_s=init_state()
     for i_episode in range(EPISODE):
         # 初始化环境
