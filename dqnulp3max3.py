@@ -54,7 +54,8 @@ def init_region2():
     userregion=sheet.row_values(sheet.nrows-1)
     print("userregion",userregion)
     for i in range(regionnum):
-        regionn =[0,int(userregion[i]*99/539)+1,0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
+        regionn = [0, int(userregion[i]), 0, (i % cell) * celllength + celllength / 2,(int(i / cell)) * celllength + celllength / 2]
+        # regionn =[0,int(userregion[i]*99/539)+1,0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
         # print(r)
         init_region.append(regionn)
         # print(region)
