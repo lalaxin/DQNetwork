@@ -29,17 +29,17 @@ LR = 0.0001             # learning rate
 EPSILON = 0               # greedy policy
 GAMMA = 0.99                 # reward discount
 TARGET_REPLACE_ITER = 80   # target update frequency
-MEMORY_CAPACITY =7000
+MEMORY_CAPACITY =3500
 
 # 参数设置
 T=12#时间时段
-RB=5000#预算约束
+RB=5000#预算约束gi
 # 横向网格数
 cell=10
 # 单个网格长度
 celllength=300
 regionnum=cell*cell #区域个数
-EPISODE=1000 #迭代次数
+EPISODE=500 #迭代次数
 # 记录损失
 loss=[]
 
