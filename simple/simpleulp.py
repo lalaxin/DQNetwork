@@ -1,5 +1,5 @@
 """
-不考虑用户本来骑车的影响，即只根据用户的步行距离来计算支付预算，同时考虑网格区域，用户还车根据区域还车
+考虑用户骑行成本约束，决定用户去或者不去临近区域还车，转化成背包问题，将用户的骑行成本作为重量，价值为1，即尽可能多的下一个时间段的用户骑到车
 """
 
 from scipy import optimize as opt
@@ -9,6 +9,32 @@ import math
 import copy
 from km3maxdistance import km
 # from helloword import User
+# 动态规划
+class solution:
+    def ZeroOnePack(W, V, MW):  # 0-1背包
+        # 存储最大价值的一维数组
+        valuelist = [0] * (MW + 1)
+        # 存储物品编号的字典
+        codedict = {i: [] for i in range(0, MW + 1)}
+        # 开始计算
+        for ii in range(len(W)):  # 从第一个物品
+            copyvalue = valuelist.copy()
+            copydict = codedict.copy()
+            for jj in range(MW + 1):  # 从重量0
+                if jj >= W[ii]:  # 如果重量大于物品重量
+                    copyvalue[jj] = max(valuelist[jj - W[ii]] + V[ii], valuelist[jj])  # 选中第ii个物品和不选中，取大的
+                    # 输出被选中的物品编号
+                    if copyvalue[jj] > valuelist[jj]:
+                        copydict[jj] = [ii]
+                        for hh in codedict[jj - W[ii]]:
+                            copydict[jj].append(hh)
+            codedict = copydict.copy()  # 更新
+            valuelist = copyvalue.copy()  # 更新
+        print('所需物品：', sorted([1 + code for code in codedict[MW]]))
+        return '最大价值：', valuelist[-1]
+
+    # print(ZeroOnePack_Simple(weight, value, maxweight))
+
 
 class ulpkm:
     def __init__(self,user,region,pB,k,B,cell,celllength):

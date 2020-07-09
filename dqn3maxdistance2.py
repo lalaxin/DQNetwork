@@ -9,7 +9,7 @@ import numpy as np
 import random
 import math
 import copy
-from ulpkmmax2 import ulpkm
+from ulpregion import ulpkm
 # from ULPkm import ulpkm
 # from users import getuser
 
@@ -19,9 +19,9 @@ import matplotlib.pyplot as plt
 import time
 from torch.autograd import Variable
 
-random.seed(1)
+random.seed(2)
 # Hyper Parameters
-BATCH_SIZE = 32
+BATCH_SIZE = 128
 
 
 LR = 0.0004             # learning rate
@@ -31,8 +31,8 @@ TARGET_REPLACE_ITER = 100   # target update frequency
 MEMORY_CAPACITY =4000
 
 # 参数设置
-T=10 #时间时段
-RB=5000#预算约束
+T=100 #时间时段
+RB=500000#预算约束
 # 横向网格数
 cell=2
 # 单个网格长度
@@ -63,7 +63,9 @@ def init_user_demand():
     userdemand=[[[0]for i in range (usernum)] for t in range (T)]
     for t in range (T):
         for i in range (usernum):
-            userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),cell*celllength*1.4,-1,-1]
+            # 用户的位置全部用区域表示
+            userdemand[t][i]=[(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,cell*celllength*1.4,-1,-1]
+            # userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),cell*celllength*1.4,-1,-1]
     print("userdemand",userdemand)
     return userdemand
 

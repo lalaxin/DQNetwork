@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import time
 from torch.autograd import Variable
 
-random.seed(1)
+random.seed(2)
 # Hyper Parameters
 BATCH_SIZE = 32
 
@@ -29,8 +29,8 @@ TARGET_REPLACE_ITER = 80   # target update frequency
 MEMORY_CAPACITY =4000
 
 # 参数设置
-T=10 #时间时段
-RB=5000#预算约束
+T=100 #时间时段
+RB=500000#预算约束
 # 横向网格数
 cell=4
 # 单个网格长度

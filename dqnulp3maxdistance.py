@@ -209,6 +209,7 @@ def run_this():
     print('\nCollecting experience...')
     # run this
     sumreward=[]
+    ll=[]
     init_user = init_user_demand()
     init_s=init_state()
     for i_episode in range(EPISODE):
@@ -520,6 +521,8 @@ def run_this():
             s = copy.deepcopy(s_)
         print("这一代的总奖励",sum_r)
         sumreward.append(sum_r)
+        last_100_avgs = np.array(sumreward[max(0, i_episode - 100):i_episode + 1]).mean()
+        ll.append(last_100_avgs)
         print(i_episode)
     plt.figure(1)
     plt.xlabel("iterators", size=14)
