@@ -12,7 +12,7 @@ import pandas as pd
 class getuser():
     def getusers(self):
         # 打开需要操作的excel,由于地图左下角区域没有用户，所以不处理那些区域（原点定为（8000，7000））
-        excel = xlrd.open_workbook("./data4.xlsx")
+        excel = xlrd.open_workbook("../data4.xlsx")
 
         # 获取excel的sheet表
         sheet = excel.sheet_by_name("Sheet1")

@@ -1,4 +1,8 @@
+"""
+使用的是自己写的二部图匹配
+"""
 import operator
+import random
 import time
 
 import numpy as np
@@ -160,7 +164,7 @@ class km():
         # print("matchright",self.match_right)
         return self.user
 
-    def finaluser(self):
+    def finaluser_greedy(self):
         self.KM()
         weight = []
         userid = []
@@ -193,9 +197,81 @@ class km():
             if(userid[i]!=-1):
                 self.user[userid[i]][5] = -1
                 self.user[userid[i]][6] = -1
+        temp=len(self.user)
+        for i in range(len(self.user)):
+            if(self.user[i][5]==-1 and self.user[i][6]==-1):
+                temp-=1
+                self.user[i][5]=self.user[i][2]
+                self.user[i][6] = self.user[i][3]
+        print("接取到任务的用户数temp",temp)
         return self.user
             # 求出所有的匹配的t好感度之和
         # 根据match_right[i]来确定用户和那一区域匹配
+
+    def finaluser_bag(self):
+        self.KM()
+        weight = []
+        userid = []
+        value = []
+        MW = self.B
+        for i in range(len(self.user)):
+            if (self.user[i][5] != -1 and self.user[i][6] != -1):
+                lslarr = math.sqrt(
+                    math.pow((self.user[i][0] - self.user[i][2]), 2) + math.pow((self.user[i][1] - self.user[i][3]),
+                                                                                2))  # 起点到终点
+                lslact = math.sqrt(
+                    math.pow((self.user[i][0] - self.user[i][5]), 2) + math.pow((self.user[i][1] - self.user[i][6]),
+                                                                                2))  # 起点到实际位置
+                larrlact = math.sqrt(
+                    math.pow((self.user[i][5] - self.user[i][2]), 2) + math.pow((self.user[i][6] - self.user[i][3]),
+                                                                                2))
+                weight.append(self.pB * (lslact - lslarr) + self.k * (larrlact) * (larrlact))
+                userid.append(i)
+                value.append(self.user[i][4])
+        print("weight",weight)
+        print("value",value)
+        user_id=self.bag_0_1(weight,value,MW)
+        # 用户有一定的概率不接受任务，即随机生成一个数，判断是否在概率内
+        for i in range(len(userid)):
+            if(user_id[i]!=1):
+                self.user[userid[i]][5] = self.user[userid[i]][2]
+                self.user[userid[i]][6] = self.user[userid[i]][3]
+            else:
+                if(random.random()>self.user[userid[i][4]]):
+                    self.user[userid[i]][5] = self.user[userid[i]][2]
+                    self.user[userid[i]][6] = self.user[userid[i]][3]
+        return self.user
+
+
+    def bag_0_1(self,weight, value, weight_most):  # return max value
+        num = len(weight)
+        user_id=[]
+        weight.insert(0, 0)  # 前0件要用
+        value.insert(0, 0)  # 前0件要用
+        bag = np.zeros((num + 1, weight_most + 1), dtype=np.float)  # 下标从零开始
+        for i in range(1, num + 1):
+            for j in range(1, weight_most + 1):
+                if weight[i] <= j:
+                    bag[i][j] = max(bag[i - 1][int(round(j - weight[i]))] + value[i], bag[i - 1][j])
+                else:
+                    bag[i][j] = bag[i - 1][j]
+        # print(bag)
+        print('最大价值为:', bag[num][int(weight_most)])
+        x = [0 for i in range(num)]
+        j = int(weight_most)
+        for i in range(num, 0, -1):
+            if bag[i][int(j)] > bag[i - 1][int(j)]:
+                x[i - 1] = 1
+                j -= weight[i - 1]
+        print("背包中所装物品为：")
+        for i in range(num):
+            if x[i]:
+                user_id.append(1)
+            else:
+                user_id.append(0)
+                print("第", i + 1, "个", end=' ')
+        # 返回取得物品的编号
+        return user_id
 
 
 # cellength=2

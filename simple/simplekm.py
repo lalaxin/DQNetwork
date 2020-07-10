@@ -1,7 +1,8 @@
 """
-用户的起始区域和终点区域都使用区域中心点坐标表示
+使用的二部图匹配包，有问题
 """
 import operator
+import random
 
 import numpy as np
 import math
@@ -92,7 +93,7 @@ class KM():
         print('所需物品：', sorted([1 + code for code in codedict[MW]]))
         return '最大价值：', valuelist[-1]
 
-    def finaluser(self):
+    def finaluser_greedy(self):
         self.km()
         weight=[]
         userid=[]
@@ -113,17 +114,82 @@ class KM():
                 break
             else:
                 weight[min_index]=1e10
-                userid.remove(min_index)
+                userid[min_index]=-1
         for i in range(len(userid)):
-            self.user[userid[i]][5]=-1
-            self.user[userid[i]][6] = -1
-        # print("weight",weight)
-        # print("value",value)
-        # print("userid",userid)
-        # valuelist=self.backpack(weight,value,MW)
-        # print(valuelist)
-        # print("分配预算后：",self.user)
+            if(userid[i]!=-1):
+                self.user[userid[i]][5]=-1
+                self.user[userid[i]][6] = -1
+        for i in range(len(self.user)):
+            if(self.user[i][5]==-1 and self.user[i][6]==-1):
+                self.user[i][5]=self.user[i][2]
+                self.user[i][6] = self.user[i][3]
+
         return self.user
+
+    def finaluser_bag(self):
+        self.KM()
+        weight = []
+        userid = []
+        value = []
+        MW = self.B
+        for i in range(len(self.user)):
+            if (self.user[i][5] != -1 and self.user[i][6] != -1):
+                lslarr = math.sqrt(
+                    math.pow((self.user[i][0] - self.user[i][2]), 2) + math.pow((self.user[i][1] - self.user[i][3]),
+                                                                                2))  # 起点到终点
+                lslact = math.sqrt(
+                    math.pow((self.user[i][0] - self.user[i][5]), 2) + math.pow((self.user[i][1] - self.user[i][6]),
+                                                                                2))  # 起点到实际位置
+                larrlact = math.sqrt(
+                    math.pow((self.user[i][5] - self.user[i][2]), 2) + math.pow((self.user[i][6] - self.user[i][3]),
+                                                                                2))
+                weight.append(self.pB * (lslact - lslarr) + self.k * (larrlact) * (larrlact))
+                userid.append(i)
+                value.append(self.user[i][4])
+        print("weight",weight)
+        print("value",value)
+        user_id=self.bag_0_1(weight,value,MW)
+        # 用户有一定的概率不接受任务，即随机生成一个数，判断是否在概率内
+        for i in range(len(userid)):
+            if(user_id[i]!=1):
+                self.user[userid[i]][5] = self.user[userid[i]][2]
+                self.user[userid[i]][6] = self.user[userid[i]][3]
+            else:
+                if(random.random()>self.user[userid[i][4]]):
+                    self.user[userid[i]][5] = self.user[userid[i]][2]
+                    self.user[userid[i]][6] = self.user[userid[i]][3]
+        return self.user
+
+
+    def bag_0_1(self,weight, value, weight_most):  # return max value
+        num = len(weight)
+        user_id=[]
+        weight.insert(0, 0)  # 前0件要用
+        value.insert(0, 0)  # 前0件要用
+        bag = np.zeros((num + 1, weight_most + 1), dtype=np.float)  # 下标从零开始
+        for i in range(1, num + 1):
+            for j in range(1, weight_most + 1):
+                if weight[i] <= j:
+                    bag[i][j] = max(bag[i - 1][int(round(j - weight[i]))] + value[i], bag[i - 1][j])
+                else:
+                    bag[i][j] = bag[i - 1][j]
+        # print(bag)
+        print('最大价值为:', bag[num][int(weight_most)])
+        x = [0 for i in range(num)]
+        j = int(weight_most)
+        for i in range(num, 0, -1):
+            if bag[i][int(j)] > bag[i - 1][int(j)]:
+                x[i - 1] = 1
+                j -= weight[i - 1]
+        print("背包中所装物品为：")
+        for i in range(num):
+            if x[i]:
+                user_id.append(1)
+            else:
+                user_id.append(0)
+                print("第", i + 1, "个", end=' ')
+        # 返回取得物品的编号
+        return user_id
 
 
 
