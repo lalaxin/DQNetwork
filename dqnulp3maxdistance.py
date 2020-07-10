@@ -60,7 +60,6 @@ for i in range(regionnum):
 
 # 用户需求,T个时间段的用户需求# 定义用户数组（起点横坐标，起点纵坐标，终点横坐标，终点纵坐标，最大步行距离,期望停车区域横坐标，期望停车区域纵坐标）
 def init_user_demand():
-
     userdemand=[[[0]for i in range (usernum)] for t in range (T)]
     for t in range (T):
         for i in range (usernum):
