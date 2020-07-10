@@ -2,6 +2,8 @@
 贪心为每个时间段分配预算，即可愿意完成任务的用户都为其分配
 """
 # 参数设置
+import copy
+
 import xlrd
 
 from users3_1 import getuser
@@ -51,3 +53,30 @@ def init_state():
         s[i]=init_region[i][1] #第i个区域的车的供应量
     s[3*regionnum]=RB
     return s
+
+if __name__ == '__main__':
+    user=copy.deepcopy(init_user)
+    for t in range (T):
+        avery_RB=RB/T
+        # 计算每个时间段的缺车数
+        if (t != T - 1):
+            for i in range(len(user[t + 1])):
+                if (user[t + 1][i][0] == cell * celllength and user[t + 1][i][1] == cell * celllength):
+                    tempa = int(cell * cell - 1)
+                elif (user[t + 1][i][0] == cell * celllength):
+                    tempa = int(user[t + 1][i][1] / celllength) * cell + int(user[t + 1][i][0] / celllength) - 1
+                elif (user[t + 1][i][1] == cell * celllength):
+                    tempa = int(user[t + 1][i][1] / celllength) * cell + int(user[t + 1][i][0] / celllength) - cell
+                else:
+                    tempa = int(user[t + 1][i][1] / celllength) * cell + int(user[t + 1][i][0] / celllength)
+                if (tempa < cell * cell):
+                    region[tempa][0] += 1
+        regionnn = []
+        for i in range(regionnum):
+            region[i][1] = s_[i]
+            if (region[i][0] - region[i][1] > 0):
+                region[i][2] = region[i][0] - region[i][1]
+            else:
+                region[i][2] = 0
+            regionnn.append(region[i][1])
+        print("regionnn", sum(regionnn), regionnn)
