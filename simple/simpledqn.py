@@ -339,7 +339,7 @@ def run_this():
                 #         r=-1
                 #     else:
                 #         r=(len(preremove)-len(removeuser))/len(preremove)
-                r=len(user[t])/539
+                r=(len(user[t])/539)*10
                 if(r<0):
                     regionn=[]
                     print("len(user[t])", len(user[t-1]))
@@ -427,7 +427,7 @@ def run_this():
             # 执行重平衡任务，来得到用户的还车地点
             # print("len(user[t])",len(user[t]))
             if(len(user[t])!=0 and sumlackbike!=0):
-                kmtest = km(region, user[t], celllength,RB_t,1,10)
+                kmtest = km(region, user[t], celllength,RB_t,0.1,1)
                 tempuser=kmtest.finaluser_greedy()
                 # ulp1 = ulpkm(user=user[t], region=region, pB=1, k=100, B=RB_t, cell=cell, celllength=celllength)
                 # tempuser, tempfit = ulp1.run()
