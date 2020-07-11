@@ -26,98 +26,98 @@ random.seed(2)
 BATCH_SIZE = 128
 
 
-LR = 0.0004             # learning rate
+LR = 0.004             # learning rate
 EPSILON = 0               # greedy policy
 GAMMA = 0.95                 # reward discount
 TARGET_REPLACE_ITER = 100   # target update frequency
-MEMORY_CAPACITY =4000
+MEMORY_CAPACITY =15000
 
 # 参数设置
-T=100 #时间时段
+T=12 #时间时段
 RB=50000000#预算约束
 # 横向网格数
 cell=10
 # 单个网格长度
 celllength=300
 regionnum=cell*cell #区域个数
-EPISODE=1000 #迭代次数
+EPISODE=3000 #迭代次数
 # 记录损失
 loss=[]
 
-usernum=100 #用户数为10
-
-# # 随机数据
-# （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
-init_region = list()
-number=0
-region0=[0,1,1,0,0,0,0,1,2,0,2,2,1,0,2,1]
-for i in range(regionnum):
-    regionn =[0,0,0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
-    init_region.append(regionn)
-
-# 用户需求,T个时间段的用户需求# 定义用户数组（起点横坐标，起点纵坐标，终点横坐标，终点纵坐标，最大步行距离,期望停车区域横坐标，期望停车区域纵坐标）
-def init_user_demand():
-    userdemand=[[[0]for i in range (usernum)] for t in range (T)]
-    for t in range (T):
-        for i in range (usernum):
-            # 用户的位置全部用区域表示
-            userdemand[t][i]=[random.randint(0, cell*celllength),random.randint(0, cell*celllength),(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,cell*celllength*1.4,-1,-1]
-            # userdemand[t][i]=[(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,cell*celllength*1.4,-1,-1]
-            # userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),cell*celllength*1.4,-1,-1]
-    print("userdemand",userdemand)
-    return userdemand
-init_user=init_user_demand()
-
-def init_user_region():
-    number=0
-    for i in range(len(init_user[0])):
-        if (init_user[0][i][0] == cell * celllength and init_user[0][i][1] == cell * celllength):
-            tempa = int(cell * cell - 1)
-        elif (init_user[0][i][0] == cell * celllength):
-            tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength) - 1
-        elif (init_user[0][i][1] == cell * celllength):
-            tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength) - cell
-        else:
-            tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength)
-        if (tempa < cell * cell):
-            init_region[tempa][1]+=1
-    for i in range(regionnum):
-        number += init_region[i][1]
-    print("number",number)
-init_user_region()
-print("initregion",init_region)
+# usernum=100 #用户数为10
+#
+# # # 随机数据
+# # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
+# init_region = list()
+# number=0
+# region0=[0,1,1,0,0,0,0,1,2,0,2,2,1,0,2,1]
+# for i in range(regionnum):
+#     regionn =[0,0,0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
+#     init_region.append(regionn)
+#
+# # 用户需求,T个时间段的用户需求# 定义用户数组（起点横坐标，起点纵坐标，终点横坐标，终点纵坐标，最大步行距离,期望停车区域横坐标，期望停车区域纵坐标）
+# def init_user_demand():
+#     userdemand=[[[0]for i in range (usernum)] for t in range (T)]
+#     for t in range (T):
+#         for i in range (usernum):
+#             # 用户的位置全部用区域表示
+#             userdemand[t][i]=[random.randint(0, cell*celllength),random.randint(0, cell*celllength),(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,cell*celllength*1.4,-1,-1]
+#             # userdemand[t][i]=[(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,cell*celllength*1.4,-1,-1]
+#             # userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),cell*celllength*1.4,-1,-1]
+#     print("userdemand",userdemand)
+#     return userdemand
+# init_user=init_user_demand()
+#
+# def init_user_region():
+#     number=0
+#     for i in range(len(init_user[0])):
+#         if (init_user[0][i][0] == cell * celllength and init_user[0][i][1] == cell * celllength):
+#             tempa = int(cell * cell - 1)
+#         elif (init_user[0][i][0] == cell * celllength):
+#             tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength) - 1
+#         elif (init_user[0][i][1] == cell * celllength):
+#             tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength) - cell
+#         else:
+#             tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength)
+#         if (tempa < cell * cell):
+#             init_region[tempa][1]+=1
+#     for i in range(regionnum):
+#         number += init_region[i][1]
+#     print("number",number)
+# init_user_region()
+# print("initregion",init_region)
 
 # 初始化状态，直接根据region来初始化状态
 
 # 真实数据
-# init_region = list()
-# def init_region2():
-#     userregion = []
-#     excel = xlrd.open_workbook("../userregion.xlsx")
-#     sheet = excel.sheet_by_name("sheet1")
-#     userregion=sheet.row_values(0)
-#     print("userregion",userregion)
-#     for i in range(regionnum):
-#         regionn = [0, int(userregion[i]), 0, (i % cell) * celllength + celllength / 2,(int(i / cell)) * celllength + celllength / 2]
-#         # regionn =[0,int(userregion[i]*99/539)+1,0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
-#         init_region.append(regionn)
-#         # print(region)
-# init_region2()
-#
-#
-# number=0
-# # region0=[0,1,1,0,0,0,0,1,2,0,2,2,1,0,2,1]
-# for i in range(regionnum):
-#       number += init_region[i][1]
-# print("initregion",init_region)
-# print("number",number)
-#
-# # 真实需求
-# def init_user_demand():
-#     # 将excel的数据存于数组中
-#     userdemand=getuser().getusers()
-#     return userdemand
-# init_user = init_user_demand()
+init_region = list()
+def init_region2():
+    userregion = []
+    excel = xlrd.open_workbook("../userregion.xlsx")
+    sheet = excel.sheet_by_name("sheet1")
+    userregion=sheet.row_values(0)
+    print("userregion",userregion)
+    for i in range(regionnum):
+        regionn = [0, int(userregion[i]), 0, (i % cell) * celllength + celllength / 2,(int(i / cell)) * celllength + celllength / 2]
+        # regionn =[0,int(userregion[i]*99/539)+1,0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
+        init_region.append(regionn)
+        # print(region)
+init_region2()
+
+
+number=0
+# region0=[0,1,1,0,0,0,0,1,2,0,2,2,1,0,2,1]
+for i in range(regionnum):
+      number += init_region[i][1]
+print("initregion",init_region)
+print("number",number)
+
+# 真实需求
+def init_user_demand():
+    # 将excel的数据存于数组中
+    userdemand=getuser().getusers()
+    return userdemand
+init_user = init_user_demand()
 
 def init_state():
     #状态应包含这一时间段每个区域的（第二个regionnum）用户数，(第1个regionnum)车的供应数以及下一阶段该区域的缺车数（第三个regionnum）
@@ -144,14 +144,14 @@ class Net(nn.Module):
         # nn.Linear用于设置网络中的全连接层（全连接层的输入输出都是二维张量）nn.linear(in_features,out_features)in_features指size of input sample，out_features指size of output sample
         # 定义网络结构y=w*x+b weight[out_features,in_features],w,b是神经网络的参数，我们的目的就是不断更新神经网络的参数来优化目标函数
         # 我们只需将输入的特征数和输出的特征数传递给torch.nn.Linear类，就会自动生成对应维度的权重参数和偏置
-        self.fc1 = nn.Linear(N_STATES, 120)
+        self.fc1 = nn.Linear(N_STATES, 512)
         self.fc1.weight.data.normal_(0, 0.1)   # initialization,权重初始化，利用正态进行初始化
-        self.fc2 = nn.Linear(120, 120)
+        self.fc2 = nn.Linear(512, 512)
         self.fc2.weight.data.normal_(0, 0.1)
         # self.fc3 = nn.Linear(128, 128)
         # self.fc3.weight.data.normal_(0, 0.1)
         # 第二层神经网络，用于输出action
-        self.out = nn.Linear(120, N_ACTIONS)
+        self.out = nn.Linear(512, N_ACTIONS)
         self.out.weight.data.normal_(0, 0.1)   # initialization
 
     # 执行数据的流动
@@ -339,7 +339,7 @@ def run_this():
                 #         r=-1
                 #     else:
                 #         r=(len(preremove)-len(removeuser))/len(preremove)
-                r=len(init_user[t])-len(removeuser)
+                r=len(user[t])/539
                 if(r<0):
                     regionn=[]
                     print("len(user[t])", len(user[t-1]))

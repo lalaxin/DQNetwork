@@ -208,6 +208,54 @@ class km():
             # 求出所有的匹配的t好感度之和
         # 根据match_right[i]来确定用户和那一区域匹配
 
+    # 用于贪心策略的greedy取值
+    def finaluser_greedy_greedy(self):
+        self.KM()
+        weight = []
+        userid = []
+        value = []
+        MW = self.B
+        for i in range(len(self.user)):
+            if (self.user[i][5] != -1 and self.user[i][6] != -1):
+                lslarr = math.sqrt(
+                    math.pow((self.user[i][0] - self.user[i][2]), 2) + math.pow((self.user[i][1] - self.user[i][3]),
+                                                                                2))  # 起点到终点
+                lslact = math.sqrt(
+                    math.pow((self.user[i][0] - self.user[i][5]), 2) + math.pow((self.user[i][1] - self.user[i][6]),
+                                                                                2))  # 起点到实际位置
+                larrlact = math.sqrt(
+                    math.pow((self.user[i][5] - self.user[i][2]), 2) + math.pow((self.user[i][6] - self.user[i][3]),
+                                                                                2))
+                weight.append(self.pB * (lslact - lslarr) + self.k * (larrlact) * (larrlact))
+                userid.append(i)
+                value.append(1)
+        init_weight=copy.deepcopy(weight)
+        for i in range(len(weight)):
+            min_index, min_number = min(enumerate(weight), key=operator.itemgetter(1))
+            MW -= min_number
+            if (MW < 0):
+                break
+            else:
+                weight[min_index] = 1e10
+                userid[min_index]=-1
+        for i in range(len(weight)):
+            if(weight[i]!=1e10):
+                init_weight[i]=-1
+        for i in range(len(userid)):
+            if(userid[i]!=-1):
+                self.user[userid[i]][5] = -1
+                self.user[userid[i]][6] = -1
+        temp=len(self.user)
+        for i in range(len(self.user)):
+            if(self.user[i][5]==-1 and self.user[i][6]==-1):
+                temp-=1
+                self.user[i][5]=self.user[i][2]
+                self.user[i][6] = self.user[i][3]
+        print("接取到任务的用户数temp",temp)
+        return init_weight,self.user
+            # 求出所有的匹配的t好感度之和
+        # 根据match_right[i]来确定用户和那一区域匹配
+
     def finaluser_bag(self):
         self.KM()
         weight = []
@@ -241,6 +289,43 @@ class km():
                     self.user[userid[i]][5] = self.user[userid[i]][2]
                     self.user[userid[i]][6] = self.user[userid[i]][3]
         return self.user
+
+    def finaluser_bag_greedy(self):
+        self.KM()
+        weight = []
+        userid = []
+        value = []
+        MW = self.B
+        for i in range(len(self.user)):
+            if (self.user[i][5] != -1 and self.user[i][6] != -1):
+                lslarr = math.sqrt(
+                    math.pow((self.user[i][0] - self.user[i][2]), 2) + math.pow((self.user[i][1] - self.user[i][3]),
+                                                                                2))  # 起点到终点
+                lslact = math.sqrt(
+                    math.pow((self.user[i][0] - self.user[i][5]), 2) + math.pow((self.user[i][1] - self.user[i][6]),
+                                                                                2))  # 起点到实际位置
+                larrlact = math.sqrt(
+                    math.pow((self.user[i][5] - self.user[i][2]), 2) + math.pow((self.user[i][6] - self.user[i][3]),
+                                                                                2))
+                weight.append(self.pB * (lslact - lslarr) + self.k * (larrlact) * (larrlact))
+                userid.append(i)
+                value.append(self.user[i][4])
+        print("weight",weight)
+        print("value",value)
+        init_weight=copy.deepcopy(weight)
+        user_id=self.bag_0_1(weight,value,MW)
+
+        # 用户有一定的概率不接受任务，即随机生成一个数，判断是否在概率内
+        for i in range(len(userid)):
+            if(user_id[i]!=1):
+                init_weight[i]=-1
+                self.user[userid[i]][5] = self.user[userid[i]][2]
+                self.user[userid[i]][6] = self.user[userid[i]][3]
+            else:
+                if(random.random()>self.user[userid[i][4]]):
+                    self.user[userid[i]][5] = self.user[userid[i]][2]
+                    self.user[userid[i]][6] = self.user[userid[i]][3]
+        return init_weight,self.user
 
 
     def bag_0_1(self,weight, value, weight_most):  # return max value

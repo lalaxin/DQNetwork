@@ -2,8 +2,11 @@
 贪心为每个时间段分配预算，即可愿意完成任务的用户都为其分配
 """
 # 参数设置
+import copy
+
 import xlrd
 
+from simple.simplekm2 import km
 from users3_1 import getuser
 
 T=12 #时间时段
@@ -51,3 +54,85 @@ def init_state():
         s[i]=init_region[i][1] #第i个区域的车的供应量
     s[3*regionnum]=RB
     return s
+
+if __name__ == '__main__':
+    r=0
+    sum_r=[]
+    user=copy.deepcopy(init_user)
+    region=copy.deepcopy(init_region)
+    for t in range (T):
+        removeuser=[]
+        # 计算离开的用户数
+        for i in range(len(user[t])):
+            if (user[t][i][0] == cell * celllength and user[t][i][1] == cell * celllength):
+                tempa = int(cell * cell - 1)
+            elif (user[t][i][0] == cell * celllength):
+                tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength) - 1
+            elif (user[t][i][1] == cell * celllength):
+                tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength) - cell
+            else:
+                tempa = int(user[t][i][1] / celllength) * cell + int(user[t][i][0] / celllength)
+            if (tempa < cell * cell):
+                    # 将多余的用户存于数组中，循环结束后再删除,同时存取没取到车的用户和位置
+                if(region[tempa][1]<=0):
+                    removeuser.append(user[t][i])
+                else:
+                    region[tempa][1]-=1
+        for i in range(len(removeuser)):
+            # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),这个惩罚算的是调度时那个阶段的
+            #         将没有骑到车的无效用户移除
+            user[t].remove(removeuser[i])
+        if(t!=0 and t!=T-1):
+            r=len(user[t])
+            print("reward",r)
+            sum_r.append(r)
+        # 计算每个时间段的缺车数
+        if (t != T - 1):
+            for i in range(len(user[t + 1])):
+                if (user[t + 1][i][0] == cell * celllength and user[t + 1][i][1] == cell * celllength):
+                    tempa = int(cell * cell - 1)
+                elif (user[t + 1][i][0] == cell * celllength):
+                    tempa = int(user[t + 1][i][1] / celllength) * cell + int(user[t + 1][i][0] / celllength) - 1
+                elif (user[t + 1][i][1] == cell * celllength):
+                    tempa = int(user[t + 1][i][1] / celllength) * cell + int(user[t + 1][i][0] / celllength) - cell
+                else:
+                    tempa = int(user[t + 1][i][1] / celllength) * cell + int(user[t + 1][i][0] / celllength)
+                if (tempa < cell * cell):
+                    region[tempa][0] += 1
+        regionnn = []
+        for i in range(regionnum):
+            # 根据下一时间段用户及当前区域的车的数量计算缺车数
+            if (region[i][0] - region[i][1] > 0):
+                region[i][2] = region[i][0] - region[i][1]
+            else:
+                region[i][2] = 0
+            regionnn.append(region[i][1])
+        # print("regionnn", sum(regionnn), regionnn)
+
+        # 还车时更新region[1]，进入下一层循环
+        kmtest = km(region, user[t], celllength, RB, 1, 10)
+        tempweight,tempuser = kmtest.finaluser_greedy_greedy()
+
+        # 再计算在上个时间段花了多少预算，再减掉
+        for i in range (len(tempweight)):
+            if(tempweight[i]!=-1):
+                RB-=tempweight[i]
+        print("RB",RB)
+
+
+        for i in range(len(user[t])):
+            if (tempuser[i][5] == cell * celllength and tempuser[i][6] == cell * celllength):
+                tempb = cell * cell - 1
+            elif (tempuser[i][5] == cell * celllength):
+                tempb = int(tempuser[i][6] / celllength) * cell + int(tempuser[i][5] / celllength) - 1
+            elif (tempuser[i][6] == cell * celllength):
+                tempb = int(tempuser[i][6] / celllength) * cell + int(
+                    tempuser[i][5] / celllength) - cell
+            else:
+                tempb = int(tempuser[i][6] / celllength) * cell + int(tempuser[i][5] / celllength)
+            # 得到上一阶段的用户还车地点来更新s_
+            if (tempb <= cell * cell):
+                region[tempb][1]+=1
+
+
+    print("sumr",sum(sum_r),sum_r)
