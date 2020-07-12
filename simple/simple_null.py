@@ -82,7 +82,6 @@ if __name__ == '__main__':
 
 
         for i in range(len(user[t])):
-
             if (user[t][i][2] == cell * celllength and user[t][i][3] == cell * celllength):
                 tempb = cell * cell - 1
             elif (user[t][i][2] == cell * celllength):
