@@ -181,9 +181,12 @@ class km():
                 larrlact = math.sqrt(
                     math.pow((self.user[i][5] - self.user[i][2]), 2) + math.pow((self.user[i][6] - self.user[i][3]),
                                                                                 2))
-                weight.append(self.pB * (lslact - lslarr) + self.k * (larrlact) * (larrlact))
+                # weight.append(self.pB * (lslact - lslarr) + self.k * (larrlact) * (larrlact))
+                weight.append(self.k * (larrlact) * (larrlact))
                 userid.append(i)
                 value.append(1)
+        print("weight前",len(weight),weight)
+        init_weight = copy.deepcopy(weight)
         for i in range(len(weight)):
             min_index, min_number = min(enumerate(weight), key=operator.itemgetter(1))
             MW -= min_number
@@ -192,7 +195,10 @@ class km():
             else:
                 weight[min_index] = 1e10
                 userid[min_index]=-1
-
+        for i in range(len(weight)):
+            if(weight[i]!=1e10):
+                init_weight[i]=-1
+        print("weight后",len(weight), weight)
         for i in range(len(userid)):
             if(userid[i]!=-1):
                 self.user[userid[i]][5] = -1
@@ -203,7 +209,7 @@ class km():
                 temp-=1
                 self.user[i][5]=self.user[i][2]
                 self.user[i][6] = self.user[i][3]
-        print("接取到任务的用户数temp",temp)
+        print("执行任务的用户数temp",temp)
         return self.user
             # 求出所有的匹配的t好感度之和
         # 根据match_right[i]来确定用户和那一区域匹配
@@ -226,7 +232,8 @@ class km():
                 larrlact = math.sqrt(
                     math.pow((self.user[i][5] - self.user[i][2]), 2) + math.pow((self.user[i][6] - self.user[i][3]),
                                                                                 2))
-                weight.append(self.pB * (lslact - lslarr) + self.k * (larrlact) * (larrlact))
+                # weight.append(self.pB * (lslact - lslarr) + self.k * (larrlact) * (larrlact))
+                weight.append(self.k * (larrlact) * (larrlact))
                 userid.append(i)
                 value.append(1)
         init_weight=copy.deepcopy(weight)

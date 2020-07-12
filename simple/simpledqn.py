@@ -330,30 +330,31 @@ def run_this():
                 user[t].remove(removeuser[i])
 
                 # 计算下一时间段的缺车区域
-                if (t != T - 1):
-                    for i in range(len(user[t + 1])):
-                        if (user[t + 1][i][0] == cell * celllength and user[t + 1][i][1] == cell * celllength):
-                            tempa = int(cell * cell - 1)
-                        elif (user[t + 1][i][0] == cell * celllength):
-                            tempa = int(user[t + 1][i][1] / celllength) * cell + int(user[t + 1][i][0] / celllength) - 1
-                        elif (user[t + 1][i][1] == cell * celllength):
-                            tempa = int(user[t + 1][i][1] / celllength) * cell + int(
-                                user[t + 1][i][0] / celllength) - cell
-                        else:
-                            tempa = int(user[t + 1][i][1] / celllength) * cell + int(user[t + 1][i][0] / celllength)
-                        if (tempa < cell * cell):
-                            region[tempa][0] += 1
-                regionnn = []
-                for i in range(regionnum):
-                    region[i][1] = s_[i]
-                    if (region[i][0] - region[i][1] > 0):
-                        region[i][2] = region[i][0] - region[i][1]
+            if (t != T - 1):
+                for i in range(len(user[t + 1])):
+                    if (user[t + 1][i][0] == cell * celllength and user[t + 1][i][1] == cell * celllength):
+                        tempa = int(cell * cell - 1)
+                    elif (user[t + 1][i][0] == cell * celllength):
+                        tempa = int(user[t + 1][i][1] / celllength) * cell + int(user[t + 1][i][0] / celllength) - 1
+                    elif (user[t + 1][i][1] == cell * celllength):
+                        tempa = int(user[t + 1][i][1] / celllength) * cell + int(
+                            user[t + 1][i][0] / celllength) - cell
                     else:
-                        region[i][2] = 0
-                    regionnn.append(region[i][1])
-                for i in range(regionnum):
-                    s[2 * regionnum + i] = region[i][2]
-                # print("regionnn",sum(regionnn),regionnn)
+                        tempa = int(user[t + 1][i][1] / celllength) * cell + int(user[t + 1][i][0] / celllength)
+                    if (tempa < cell * cell):
+                        region[tempa][0] += 1
+            regionnn = []
+            # print("region[0],下个是时间段的用户需求",region)
+            for i in range(regionnum):
+                region[i][1] = s_[i]
+                if (region[i][0] - region[i][1] > 0):
+                    region[i][2] = region[i][0] - region[i][1]
+                else:
+                    region[i][2] = 0
+                regionnn.append(region[i][0])
+            for i in range(regionnum):
+                s[2 * regionnum + i] = region[i][2]
+            print("regionnn",sum(regionnn),regionnn)
 
 
             if(t!=0):
@@ -412,8 +413,8 @@ def run_this():
                 action=copy.deepcopy(a)
             else:
                 action=a[0]
-            RB_t = (action / N_ACTIONS) * s[3 * regionnum]
-            # RB_t=0
+            # RB_t = (action / N_ACTIONS) * s[3 * regionnum]
+            RB_t=0
 
 
             # 计算sumlackbike
@@ -421,6 +422,7 @@ def run_this():
             for i in range(len(region)):
                 if (region[i][2] > 0):
                     sumlackbike += region[i][2]
+            print("sumlackbike",t+1,sumlackbike)
 
 
             # 当有不缺车的情况发生时，会有很大奖励
