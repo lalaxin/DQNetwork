@@ -16,7 +16,7 @@ import copy
 
 # print("22",Region)
 class km():
-    def __init__(self,region,user,cellength,B,pB,k):
+    def __init__(self,region,user,cellength,B,pB,k,cell):
         self.sumlackbike=0
         self.ep=1e-10
         self.region=region
@@ -26,6 +26,8 @@ class km():
         self.B = B
         self.pB = pB
         self.k = k
+        self.cell=cell
+        self.celllength = cellength
         # self.cellnum=cellnum
 
     # km最优匹配
@@ -119,9 +121,6 @@ class km():
                     # print("slack_right", self.slack_right)
                     # print("label_left", self.label_left)
                     # print("label_right", self.label_right)
-
-
-
             for t,weight in enumerate(self.match_right):
                 if not np.isnan(self.match_right[t]):
                     distance += self.adj[int(weight)][t][4]
@@ -170,6 +169,41 @@ class km():
         userid = []
         value = []
         MW = self.B
+        # 用户本来的目的地
+        user_arr=[0]*len(self.region)
+        for i in range (len(self.user)):
+            if (self.user[i][5] != -1 and self.user[i][6] != -1):
+                if (self.user[i][2] == self.cell * self.celllength and self.user[i][3] == self.cell * self.celllength):
+                    tempb = self.cell * self.cell - 1
+                elif (self.user[i][2] == self.cell * self.celllength):
+                    tempb = int(self.user[i][3] / self.celllength) * self.cell + int(self.user[i][2] / self.celllength) - 1
+                elif (self.user[i][3] == self.cell * self.celllength):
+                    tempb = int(self.user[i][3] / self.celllength) * self.cell + int(
+                        self.user[i][2] / self.celllength) - self.cell
+                else:
+                    tempb = int(self.user[i][3] / self.celllength) * self.cell + int(self.user[i][2] / self.celllength)
+                # 得到上一阶段的用户还车地点来更新s_
+                if (tempb <= self.cell * self.cell):
+                    user_arr[tempb]+= 1
+        # print("匹配成功的用户user_arr用户本来目的地",user_arr)
+        # 用户本来的目的地
+        user_act = [0] * len(self.region)
+        for i in range (len(self.user)):
+            if (self.user[i][5] != -1 and self.user[i][6] != -1):
+                if (self.user[i][5] == self.cell * self.celllength and self.user[i][6] == self.cell * self.celllength):
+                    tempb = self.cell * self.cell - 1
+                elif (self.user[i][5] == self.cell * self.celllength):
+                    tempb = int(self.user[i][6] / self.celllength) * self.cell + int(self.user[i][5] / self.celllength) - 1
+                elif (self.user[i][6] == self.cell * self.celllength):
+                    tempb = int(self.user[i][6] / self.celllength) * self.cell + int(
+                        self.user[i][5] / self.celllength) - self.cell
+                else:
+                    tempb = int(self.user[i][6] / self.celllength) * self.cell + int(self.user[i][5] / self.celllength)
+                # 得到上一阶段的用户还车地点来更新s_
+                if (tempb <= self.cell * self.cell):
+                    user_act[tempb] += 1
+        # print("匹配成功的用户user_arr匹配的目的的地",user_act)
+
         for i in range(len(self.user)):
             if (self.user[i][5] != -1 and self.user[i][6] != -1):
                 lslarr = math.sqrt(
@@ -185,7 +219,7 @@ class km():
                 weight.append(self.k * (larrlact) * (larrlact))
                 userid.append(i)
                 value.append(1)
-        print("weight前",len(weight),weight)
+        # print("weight前",len(weight),weight)
         init_weight = copy.deepcopy(weight)
         for i in range(len(weight)):
             min_index, min_number = min(enumerate(weight), key=operator.itemgetter(1))
@@ -198,7 +232,7 @@ class km():
         for i in range(len(weight)):
             if(weight[i]!=1e10):
                 init_weight[i]=-1
-        print("weight后",len(weight), weight)
+        # print("weight后",len(weight), weight)
         for i in range(len(userid)):
             if(userid[i]!=-1):
                 self.user[userid[i]][5] = -1

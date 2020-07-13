@@ -21,7 +21,7 @@ from torch.autograd import Variable
 
 from users3_1 import getuser
 
-random.seed(2)
+random.seed(1)
 # Hyper Parameters
 BATCH_SIZE = 128
 
@@ -30,21 +30,21 @@ LR = 0.004             # learning rate
 EPSILON = 0               # greedy policy
 GAMMA = 0.95                 # reward discount
 TARGET_REPLACE_ITER = 100   # target update frequency
-MEMORY_CAPACITY =6000
+MEMORY_CAPACITY =11000
 
 # 参数设置
 T=12 #时间时段
 RB=50000000#预算约束
 # 横向网格数
-cell=10
+cell=4
 # 单个网格长度
 celllength=300
 regionnum=cell*cell #区域个数
-EPISODE=1000 #迭代次数
+EPISODE=4000 #迭代次数
 # 记录损失
 loss=[]
 
-usernum=100 #用户数为10
+usernum=20 #用户数为10
 
 # # 随机数据
 # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
@@ -144,14 +144,14 @@ class Net(nn.Module):
         # nn.Linear用于设置网络中的全连接层（全连接层的输入输出都是二维张量）nn.linear(in_features,out_features)in_features指size of input sample，out_features指size of output sample
         # 定义网络结构y=w*x+b weight[out_features,in_features],w,b是神经网络的参数，我们的目的就是不断更新神经网络的参数来优化目标函数
         # 我们只需将输入的特征数和输出的特征数传递给torch.nn.Linear类，就会自动生成对应维度的权重参数和偏置
-        self.fc1 = nn.Linear(N_STATES, 600)
+        self.fc1 = nn.Linear(N_STATES, 200)
         self.fc1.weight.data.normal_(0, 0.1)   # initialization,权重初始化，利用正态进行初始化
-        self.fc2 = nn.Linear(600, 600)
+        self.fc2 = nn.Linear(200, 200)
         self.fc2.weight.data.normal_(0, 0.1)
         # self.fc3 = nn.Linear(128, 128)
         # self.fc3.weight.data.normal_(0, 0.1)
         # 第二层神经网络，用于输出action
-        self.out = nn.Linear(600, N_ACTIONS)
+        self.out = nn.Linear(200, N_ACTIONS)
         self.out.weight.data.normal_(0, 0.1)   # initialization
 
     # 执行数据的流动
@@ -354,26 +354,12 @@ def run_this():
                 regionnn.append(region[i][0])
             for i in range(regionnum):
                 s[2 * regionnum + i] = region[i][2]
-            print("regionnn",sum(regionnn),regionnn)
+            # print("regionnn下一时段缺车",sum(regionnn),regionnn)
 
 
             if(t!=0):
-                # if(sumlackbike!=0 and len(user[t-1])!=0):
-                #     if(len(preremove)==0 and len(removeuser)==0):
-                #         r=0
-                #     elif(len(preremove)==0 and len(removeuser)!=0):
-                #         r=-1
-                #     else:
-                #         r=(len(preremove)-len(removeuser))/len(preremove)
-                r=(len(user[t])/539)*10
-                if(r<0):
-                    regionn=[]
-                    print("len(user[t])", len(user[t-1]))
-                    print("user[t]", user[t-1])
-                    for i in range (regionnum):
-                        regionn.append(region[i][1])
-                    print("缺车区域：",sumlackbike, regionn)
 
+                r=((len(user[t])/(usernum*12))*10)-0.6
                 print("len(remove).len(preremove)", len(removeuser), len(preremove))
                 print("action", action,"     RB_t", RB_t,"     r", r,"     t",t)
                 # print("action",action)
@@ -401,10 +387,10 @@ def run_this():
                     tempa = int(user[t][i][3] / celllength) * cell + int(user[t][i][2] / celllength)
                 if (tempa < cell * cell):
                     preregion[tempa][1]+=1
-
-
-
-
+            preregionn=[]
+            for i in range (len(preregion)):
+                preregionn.append(preregion[i][1])
+            # print("preregion本来还",preregionn)
 
 
             # print(dqn.eval_net.fc1.weight)
@@ -413,8 +399,9 @@ def run_this():
                 action=copy.deepcopy(a)
             else:
                 action=a[0]
-            # RB_t = (action / N_ACTIONS) * s[3 * regionnum]
-            RB_t=0
+            RB_t = (action / N_ACTIONS) * s[3 * regionnum]
+            # RB_t=0
+            # RB_t=10000000
 
 
             # 计算sumlackbike
@@ -422,14 +409,14 @@ def run_this():
             for i in range(len(region)):
                 if (region[i][2] > 0):
                     sumlackbike += region[i][2]
-            print("sumlackbike",t+1,sumlackbike)
+            # print("sumlackbike",t+1,sumlackbike)
 
 
             # 当有不缺车的情况发生时，会有很大奖励
             # 执行重平衡任务，来得到用户的还车地点
             # print("len(user[t])",len(user[t]))
             if(len(user[t])!=0 and sumlackbike!=0):
-                kmtest = km(region, user[t], celllength,RB_t,0.1,1)
+                kmtest = km(region, user[t], celllength,RB_t,0.1,0.01,cell)
                 tempuser=kmtest.finaluser_greedy()
                 # ulp1 = ulpkm(user=user[t], region=region, pB=1, k=100, B=RB_t, cell=cell, celllength=celllength)
                 # tempuser, tempfit = ulp1.run()
@@ -466,7 +453,8 @@ def run_this():
                 r=1
             else:
                 r=0
-            # print("s_",s_)
+
+            # print("s_实际还",s_)
                 # balancer = tempfit
 
 
