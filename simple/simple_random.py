@@ -10,6 +10,8 @@ import xlrd
 from simple.simplekm2 import km
 from users3_1 import getuser
 
+# random.seed(1)
+
 T=12 #时间时段
 RB=50000000#预算约束
 # 横向网格数
@@ -62,7 +64,9 @@ if __name__ == '__main__':
     user=copy.deepcopy(init_user)
     region=copy.deepcopy(init_region)
     for t in range (T):
-        avery_RB=random.random()*RB
+        a=random.random()
+        avery_RB=a*RB
+        print("avery_B",a,"   ",avery_RB)
         RB-=avery_RB
         removeuser=[]
         # 计算离开的用户数
@@ -113,7 +117,7 @@ if __name__ == '__main__':
         # print("regionnn", sum(regionnn), regionnn)
 
         # 还车时更新region[1]，进入下一层循环
-        kmtest = km(region, user[t], celllength, avery_RB, 1, 10)
+        kmtest = km(region, user[t], celllength, avery_RB, 1, 0.01,cell)
         tempuser = kmtest.finaluser_greedy()
 
         for i in range(len(user[t])):

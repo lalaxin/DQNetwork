@@ -110,7 +110,7 @@ if __name__ == '__main__':
         # print("regionnn", sum(regionnn), regionnn)
 
         # 还车时更新region[1]，进入下一层循环
-        kmtest = km(region, user[t], celllength, RB, 1, 10)
+        kmtest = km(region, user[t], celllength, RB, 1, 0.01,cell)
         tempweight,tempuser = kmtest.finaluser_greedy_greedy()
 
         # 再计算在上个时间段花了多少预算，再减掉
