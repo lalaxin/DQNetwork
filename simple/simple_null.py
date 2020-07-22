@@ -52,6 +52,8 @@ if __name__ == '__main__':
     user = copy.deepcopy(init_user)
     region = copy.deepcopy(init_region)
     for t in range(T):
+        for i in range (regionnum):
+            region[i][0]=0
         avery_RB = RB / T
         removeuser = []
         # 计算离开的用户数
@@ -73,7 +75,7 @@ if __name__ == '__main__':
         for i in range(len(removeuser)):
             #         将没有骑到车的无效用户移除
             user[t].remove(removeuser[i])
-        if (t != 0 and t != T - 1):
+        if (t != 0 ):
             r = len(user[t])
             print("reward", r)
             sum_r.append(r)

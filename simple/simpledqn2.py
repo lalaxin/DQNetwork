@@ -1,5 +1,6 @@
 """
-用户只能将车归还到相邻区域，且不考虑用户去相邻区域取车
+更改simpledqn的状态，改为直接和预算相关（缺车区域，拿到车的用户，剩余预算）
+动作改为一人份一人份的预算
 """
 import torch
 import torch.nn as nn
@@ -33,7 +34,7 @@ MEMORY_CAPACITY =11000
 
 # 参数设置
 T=12 #时间时段
-RB=50#预算约束
+RB=100#预算约束
 # 横向网格数
 cell=10
 # 单个网格长度(以百米为单位)
@@ -105,7 +106,7 @@ init_region2()
 
 
 number=0
-# region0=[0,1,1,0,0,0,0,1,2,0,2,2,1,0,2,1]
+
 for i in range(regionnum):
       number += init_region[i][1]
 print("initregion",init_region)
@@ -117,15 +118,6 @@ def init_user_demand():
     userdemand=getuser().getusers()
     return userdemand
 init_user = init_user_demand()
-# 将用户的目的地改成区域的形式
-for i in range(len(init_user)):
-    for j in range(len(init_user[i])):
-        init_user[i][j][0] = round(init_user[i][j][0])
-        init_user[i][j][1] = round(init_user[i][j][1])
-        init_user[i][j][2] = (init_user[i][j][2] // celllength + 1 / 2) * celllength
-        init_user[i][j][3] = (init_user[i][j][3] // celllength + 1 / 2) * celllength
-
-
 
 def init_state():
     #状态应包含这一时间段每个区域的（第二个regionnum）用户数，(第1个regionnum)车的供应数以及下一阶段该区域的缺车数（第三个regionnum）
@@ -143,7 +135,7 @@ sum_loss=[]
 N_ACTIONS = 100
 # 接收的observation维度(区域当前供应，上个阶段每个区域的用户数，上个阶段每个区域到达的用户数，预算约束)
 # 采取的动作是分配的预算，即预算应该只与当前区域的状态，当前用户到来的状态以及下个时间段的缺车有关
-N_STATES = 3*regionnum+1
+N_STATES = 2*regionnum+1
 class Net(nn.Module):
     # 定义卷积层
     def __init__(self, ):
@@ -254,7 +246,6 @@ class DQN(object):
         self.optimizer.step()
 
 
-
 def run_this():
     dqn = DQN()
     print('\nCollecting experience...')
@@ -311,11 +302,9 @@ def run_this():
                         removeuser.append(user[t][i])
                         removeuserreggion.append(i)
                         removeuserreggion.append(tempa)
-                        s[regionnum + tempa] += 1
                     else:
                         s[regionnum + tempa] += 1
                         s_[tempa]-=1
-
 
                     if(t!=0):
                         if(preregion[tempa][1]<=0):
@@ -365,8 +354,7 @@ def run_this():
                         r = -1
                     else:
                         r = (len(preremove) - len(removeuser)) / len(preremove)
-                # temp_r=len(user[t])
-                print("len(remove).len(preremove),len(user[t])", len(removeuser), len(preremove),len(user[t]))
+                print("len(remove).len(preremove)", len(removeuser), len(preremove))
                 print("action", action,"     RB_t", RB_t,"     r", r,"     t",t)
                 # print("action",action)
 

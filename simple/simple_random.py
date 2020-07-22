@@ -10,16 +10,16 @@ import xlrd
 from simple.simplekm2 import km
 from users3_1 import getuser
 
-# random.seed(1)
+random.seed(4)
 
 T=12 #时间时段
-RB=50000000#预算约束
+RB=500000#预算约束
 # 横向网格数
 cell=10
 # 单个网格长度
 celllength=300
 regionnum=cell*cell #区域个数
-EPISODE=1000 #迭代次数
+
 
 init_region = list()
 def init_region2():
@@ -64,6 +64,8 @@ if __name__ == '__main__':
     user=copy.deepcopy(init_user)
     region=copy.deepcopy(init_region)
     for t in range (T):
+        for i in range (regionnum):
+            region[i][0]=0
         a=random.random()
         avery_RB=a*RB
         print("avery_B",a,"   ",avery_RB)
@@ -89,7 +91,7 @@ if __name__ == '__main__':
             # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),这个惩罚算的是调度时那个阶段的
             #         将没有骑到车的无效用户移除
             user[t].remove(removeuser[i])
-        if(t!=0 and t!=T-1):
+        if(t!=0):
             r=len(user[t])
             print("reward",r)
             sum_r.append(r)
@@ -113,8 +115,8 @@ if __name__ == '__main__':
                 region[i][2] = region[i][0] - region[i][1]
             else:
                 region[i][2] = 0
-            regionnn.append(region[i][1])
-        # print("regionnn", sum(regionnn), regionnn)
+            regionnn.append(region[i][2])
+        print("regionnn", sum(regionnn), regionnn)
 
         # 还车时更新region[1]，进入下一层循环
         kmtest = km(region, user[t], celllength, avery_RB, 1, 0.01,cell)
@@ -134,6 +136,7 @@ if __name__ == '__main__':
             # 得到上一阶段的用户还车地点来更新s_
             if (tempb <= cell * cell):
                 region[tempb][1]+=1
+
 
 
     print("sumr",sum(sum_r),sum_r)

@@ -292,7 +292,7 @@ class km():
                 temp-=1
                 self.user[i][5]=self.user[i][2]
                 self.user[i][6] = self.user[i][3]
-        print("接取到任务的用户数temp",temp)
+        print("执行任务的用户数temp",temp)
         return init_weight,self.user
             # 求出所有的匹配的t好感度之和
         # 根据match_right[i]来确定用户和那一区域匹配

@@ -10,7 +10,7 @@ from simple.simplekm2 import km
 from users3_1 import getuser
 
 T=12 #时间时段
-RB=50000000#预算约束
+RB=45000#预算约束
 # 横向网格数
 cell=10
 # 单个网格长度
@@ -47,6 +47,8 @@ def init_user_demand():
     return userdemand
 init_user = init_user_demand()
 
+
+
 def init_state():
     #状态应包含这一时间段每个区域的（第二个regionnum）用户数，(第1个regionnum)车的供应数以及下一阶段该区域的缺车数（第三个regionnum）
     s=[0 for i in range (3*regionnum+1)]
@@ -58,9 +60,18 @@ def init_state():
 if __name__ == '__main__':
     r=0
     sum_r=[]
+    sum_RB=[]
     user=copy.deepcopy(init_user)
+    for i in range(len(init_user)):
+        for j in range(len(init_user[i])):
+            user[i][j][0] = round(init_user[i][j][0])
+            user[i][j][1] = round(init_user[i][j][1])
+            user[i][j][2] = (init_user[i][j][2] // celllength + 1 / 2)* celllength
+            user[i][j][3] = (init_user[i][j][3] // celllength + 1 / 2) * celllength
     region=copy.deepcopy(init_region)
     for t in range (T):
+        for i in range (regionnum):
+            region[i][0]=0
         removeuser=[]
         # 计算离开的用户数
         for i in range(len(user[t])):
@@ -82,7 +93,7 @@ if __name__ == '__main__':
             # 当前区域离开的用户应到其周围区域去骑车(即附近且有车的区域去骑车),这个惩罚算的是调度时那个阶段的
             #         将没有骑到车的无效用户移除
             user[t].remove(removeuser[i])
-        if(t!=0 and t!=T-1):
+        if(t!=0 ):
             r=len(user[t])
             print("reward",r)
             sum_r.append(r)
@@ -114,10 +125,14 @@ if __name__ == '__main__':
         tempweight,tempuser = kmtest.finaluser_greedy_greedy()
 
         # 再计算在上个时间段花了多少预算，再减掉
+        tempRB=[]
         for i in range (len(tempweight)):
             if(tempweight[i]!=-1):
+                tempRB.append(tempweight[i])
                 RB-=tempweight[i]
         print("RB",RB)
+        sum_RB.append(sum(tempRB))
+        print("tempRB",sum(tempRB))
 
 
         for i in range(len(user[t])):
@@ -136,3 +151,4 @@ if __name__ == '__main__':
 
 
     print("sumr",sum(sum_r),sum_r)
+    print("tempRB",sum_RB)
