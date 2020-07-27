@@ -220,6 +220,7 @@ class km():
                 userid.append(i)
                 value.append(1)
         # print("weight前",len(weight),weight)
+        print("生成的任务个数",len(weight))
         init_weight = copy.deepcopy(weight)
         for i in range(len(weight)):
             min_index, min_number = min(enumerate(weight), key=operator.itemgetter(1))
@@ -257,12 +258,6 @@ class km():
         MW = self.B
         for i in range(len(self.user)):
             if (self.user[i][5] != -1 and self.user[i][6] != -1):
-                lslarr = math.sqrt(
-                    math.pow((self.user[i][0] - self.user[i][2]), 2) + math.pow((self.user[i][1] - self.user[i][3]),
-                                                                                2))  # 起点到终点
-                lslact = math.sqrt(
-                    math.pow((self.user[i][0] - self.user[i][5]), 2) + math.pow((self.user[i][1] - self.user[i][6]),
-                                                                                2))  # 起点到实际位置
                 larrlact = math.sqrt(
                     math.pow((self.user[i][5] - self.user[i][2]), 2) + math.pow((self.user[i][6] - self.user[i][3]),
                                                                                 2))
@@ -270,6 +265,7 @@ class km():
                 weight.append(self.k * (larrlact) * (larrlact))
                 userid.append(i)
                 value.append(1)
+        print("生成的任务个数", len(weight))
         init_weight=copy.deepcopy(weight)
         for i in range(len(weight)):
             min_index, min_number = min(enumerate(weight), key=operator.itemgetter(1))

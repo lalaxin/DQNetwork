@@ -17,7 +17,7 @@ class getuser():
         # 获取excel的sheet表
         sheet = excel.sheet_by_name("Sheet1")
         starttime = datetime.datetime(2016,8,15,8,00,00)
-        endtime = datetime.datetime(2016,8,15,8,10,00)
+        endtime = datetime.datetime(2016,8,15,8,1,00)
 
         # 统计截至日期
         deadday = datetime.datetime(2016, 8, 15, 10, 00, 00)
@@ -54,7 +54,7 @@ class getuser():
                 if d >= endtime:
                     starttime = endtime
                     print("start", starttime)
-                    endtime = endtime + datetime.timedelta(minutes=10)
+                    endtime = endtime + datetime.timedelta(minutes=1)
                     print("end", endtime)
                     onetime.append(row_i[2])
                     onetime.append(row_i[4])
@@ -128,10 +128,10 @@ def getregion():
     init_region15 = np.array(init_region)
     data = pd.DataFrame(init_region15)
     # 写入excel文件
-    writer = pd.ExcelWriter("./userregion.xlsx")
-    data.to_excel(writer, 'sheet1', float_format='%.5f')
-    writer.save()
-    writer.close()
+    # writer = pd.ExcelWriter("./userregion.xlsx")
+    # data.to_excel(writer, 'sheet1', float_format='%.5f')
+    # writer.save()
+    # writer.close()
 
 
     # print(region)

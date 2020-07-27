@@ -45,7 +45,12 @@ def init_user_demand():
     userdemand=getuser().getusers()
     return userdemand
 init_user = init_user_demand()
-
+for i in range(len(init_user)):
+    for j in range(len(init_user[i])):
+        init_user[i][j][0] = round(init_user[i][j][0])
+        init_user[i][j][1] = round(init_user[i][j][1])
+        init_user[i][j][2] = (init_user[i][j][2] // celllength + 1 / 2) * celllength
+        init_user[i][j][3] = (init_user[i][j][3] // celllength + 1 / 2) * celllength
 if __name__ == '__main__':
     r = 0
     sum_r = []

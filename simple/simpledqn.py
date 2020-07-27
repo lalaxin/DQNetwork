@@ -28,25 +28,25 @@ BATCH_SIZE = 128
 LR = 0.004             # learning rate
 EPSILON = 0               # greedy policy
 GAMMA = 0.95                 # reward discount
-TARGET_REPLACE_ITER = 100   # target update frequency
-MEMORY_CAPACITY =11000
+TARGET_REPLACE_ITER = 120  # target update frequency
+MEMORY_CAPACITY =264000
 
 # 参数设置
-T=12 #时间时段
+T=120 #时间时段
 RB=50#预算约束
 # 横向网格数
 cell=10
 # 单个网格长度(以百米为单位)
 celllength=300
 regionnum=cell*cell #区域个数
-EPISODE=4000 #迭代次数
+EPISODE=6000 #迭代次数
 # 记录损失
 loss=[]
 
-# usernum=20 #用户数为10
-#
-# # # 随机数据
-# # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
+usernum=100 #用户数为10
+
+# # 随机数据
+# （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
 # init_region = list()
 # number=0
 # region0=[0,1,1,0,0,0,0,1,2,0,2,2,1,0,2,1]
@@ -364,8 +364,8 @@ def run_this():
                     elif (len(preremove) == 0 and len(removeuser) != 0):
                         r = -1
                     else:
-                        r = (len(preremove) - len(removeuser)) / len(preremove)
-                # temp_r=len(user[t])
+                        r = ((len(preremove) - len(removeuser)) / len(preremove))*10
+                temp_r=len(user[t])
                 print("len(remove).len(preremove),len(user[t])", len(removeuser), len(preremove),len(user[t]))
                 print("action", action,"     RB_t", RB_t,"     r", r,"     t",t)
                 # print("action",action)
@@ -375,7 +375,7 @@ def run_this():
                 # s首先需要存储记忆，记忆库中有一些东西之后才能学习（前200步都是在存储记忆,大于200之后每5步学习一次）
                 if dqn.memory_counter > MEMORY_CAPACITY:
                     dqn.learn()
-                sum_r += r
+                sum_r += temp_r
 
             # 用户取车后的状态+用户还车的区域即为preregion，preregion用于下一阶段计算用户的缺车情况
             for i in range (regionnum):

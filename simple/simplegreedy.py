@@ -3,13 +3,18 @@
 """
 # 参数设置
 import copy
+import random
+random.seed(4)
+
 
 import xlrd
 
 from simple.simplekm2 import km
 from users3_1 import getuser
 
-T=12 #时间时段
+
+
+T=120 #时间时段
 RB=45000#预算约束
 # 横向网格数
 cell=10
@@ -17,6 +22,50 @@ cell=10
 celllength=300
 regionnum=cell*cell #区域个数
 EPISODE=1000 #迭代次数
+
+# # 虚拟数据
+# usernum=100 #用户数为10
+#
+# # # 随机数据
+# # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
+# init_region = list()
+# number=0
+# region0=[0,1,1,0,0,0,0,1,2,0,2,2,1,0,2,1]
+# for i in range(regionnum):
+#     regionn =[0,0,0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
+#     init_region.append(regionn)
+#
+# # 用户需求,T个时间段的用户需求# 定义用户数组（起点横坐标，起点纵坐标，终点横坐标，终点纵坐标，最大步行距离,期望停车区域横坐标，期望停车区域纵坐标）
+# def init_user_demand():
+#     userdemand=[[[0]for i in range (usernum)] for t in range (T)]
+#     for t in range (T):
+#         for i in range (usernum):
+#             # 用户的位置全部用区域表示
+#             userdemand[t][i]=[random.randint(0, cell*celllength),random.randint(0, cell*celllength),(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,cell*celllength*1.4,-1,-1]
+#             # userdemand[t][i]=[(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,cell*celllength*1.4,-1,-1]
+#             # userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),cell*celllength*1.4,-1,-1]
+#     print("userdemand",userdemand)
+#     return userdemand
+# init_user=init_user_demand()
+#
+# def init_user_region():
+#     number=0
+#     for i in range(len(init_user[0])):
+#         if (init_user[0][i][0] == cell * celllength and init_user[0][i][1] == cell * celllength):
+#             tempa = int(cell * cell - 1)
+#         elif (init_user[0][i][0] == cell * celllength):
+#             tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength) - 1
+#         elif (init_user[0][i][1] == cell * celllength):
+#             tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength) - cell
+#         else:
+#             tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength)
+#         if (tempa < cell * cell):
+#             init_region[tempa][1]+=1
+#     for i in range(regionnum):
+#         number += init_region[i][1]
+#     print("number",number)
+# init_user_region()
+# print("initregion",init_region)
 
 init_region = list()
 def init_region2():
@@ -121,18 +170,19 @@ if __name__ == '__main__':
         # print("regionnn", sum(regionnn), regionnn)
 
         # 还车时更新region[1]，进入下一层循环
-        kmtest = km(region, user[t], celllength, RB, 1, 0.01,cell)
-        tempweight,tempuser = kmtest.finaluser_greedy_greedy()
+        if(len(user[t])!=0):
+            kmtest = km(region, user[t], celllength, RB, 1, 0.01,cell)
+            tempweight,tempuser = kmtest.finaluser_greedy_greedy()
 
         # 再计算在上个时间段花了多少预算，再减掉
-        tempRB=[]
-        for i in range (len(tempweight)):
-            if(tempweight[i]!=-1):
-                tempRB.append(tempweight[i])
-                RB-=tempweight[i]
-        print("RB",RB)
-        sum_RB.append(sum(tempRB))
-        print("tempRB",sum(tempRB))
+            tempRB=[]
+            for i in range (len(tempweight)):
+                if(tempweight[i]!=-1):
+                    tempRB.append(tempweight[i])
+                    RB-=tempweight[i]
+            print("RB",RB)
+            sum_RB.append(sum(tempRB))
+            print("tempRB",sum(tempRB))
 
 
         for i in range(len(user[t])):
@@ -150,5 +200,5 @@ if __name__ == '__main__':
                 region[tempb][1]+=1
 
 
-    print("sumr",sum(sum_r),sum_r)
+    print("sumr",sum_r,sum(sum_r))
     print("tempRB",sum_RB)
