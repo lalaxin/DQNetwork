@@ -1,5 +1,5 @@
 """
-使用的是自己写的二部图匹配
+使用的是自己写的二部图匹配，二部图最大匹配，权重设置为-d,当用户得最大步行距离小于celllength时，权重设置为-inf,即用户只能去邻近区域还车
 """
 import operator
 import random
@@ -182,7 +182,7 @@ class km():
                         self.user[i][2] / self.celllength) - self.cell
                 else:
                     tempb = int(self.user[i][3] / self.celllength) * self.cell + int(self.user[i][2] / self.celllength)
-                # 得到上一阶段的用户还车地点来更新s_
+                # 得到上一阶段的用户还车地点来更新用户本来的目的地
                 if (tempb <= self.cell * self.cell):
                     user_arr[tempb]+= 1
         # print("匹配成功的用户user_arr用户本来目的地",user_arr)
@@ -199,7 +199,7 @@ class km():
                         self.user[i][5] / self.celllength) - self.cell
                 else:
                     tempb = int(self.user[i][6] / self.celllength) * self.cell + int(self.user[i][5] / self.celllength)
-                # 得到上一阶段的用户还车地点来更新s_
+                # 得到上一阶段的用户还车地点来更新用户实际匹配的目的地
                 if (tempb <= self.cell * self.cell):
                     user_act[tempb] += 1
         # print("匹配成功的用户user_arr匹配的目的的地",user_act)
@@ -396,9 +396,9 @@ class km():
         return user_id
 
 
-# cellength=2
-# User=[[0,0,5,3,10,-1,-1],[0,0,5,3,10,-1,-1],[0,0,1,3,10,-1,-1],[0,0,1,3,10,-1,-1]]
-# Region=[[0, 2, 0, 1.0, 1.0],[0, 2,1, 3.0, 1.0],[0, 2, 0, 5.0, 1.0],[0, 2, 0, 1.0, 3.0],[0, 2, 2, 3.0, 3.0],[0, 2, 0, 5.0, 3.0],[0, 2, 1, 1.0, 5.0],[0, 2, 0, 3.0, 5.0],[0, 2, 1, 5.0, 5.0]]
-# kmtest=km(Region,User,cellength,40,1,5)
-# kmtest.finaluser()
-# # print(User)
+cellength=2
+User=[[0,0,5,3,10,-1,-1],[0,0,5,3,10,-1,-1],[0,0,1,3,10,-1,-1],[0,0,1,3,10,-1,-1]]
+Region=[[0, 2, 0, 1.0, 1.0],[0, 2,1, 3.0, 1.0],[0, 2, 0, 5.0, 1.0],[0, 2, 0, 1.0, 3.0],[0, 2, 2, 3.0, 3.0],[0, 2, 0, 5.0, 3.0],[0, 2, 1, 1.0, 5.0],[0, 2, 0, 3.0, 5.0],[0, 2, 1, 5.0, 5.0]]
+kmtest=km(Region,User,cellength,100,1,5,3)
+kmtest.finaluser_greedy()
+# print(User)

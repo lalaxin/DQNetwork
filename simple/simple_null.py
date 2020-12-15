@@ -33,7 +33,7 @@ init_region2()
 
 
 number=0
-# region0=[0,1,1,0,0,0,0,1,2,0,2,2,1,0,2,1]
+
 for i in range(regionnum):
       number += init_region[i][1]
 print("initregion",init_region)
@@ -98,7 +98,7 @@ if __name__ == '__main__':
                     user[t][i][2] / celllength) - cell
             else:
                 tempb = int(user[t][i][3] / celllength) * cell + int(user[t][i][2] / celllength)
-            # 得到上一阶段的用户还车地点来更新s_
+
             if (tempb <= cell * cell):
                 region[tempb][1] += 1
 

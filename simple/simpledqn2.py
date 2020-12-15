@@ -12,7 +12,7 @@ import copy
 
 import xlrd
 
-from simple.simplekm2 import km
+from simple.match.greedymatch import greedymatch
 from ulpregion import ulpkm
 
 import matplotlib.pyplot as plt
@@ -36,7 +36,7 @@ MEMORY_CAPACITY =11000
 T=12 #时间时段
 RB=100#预算约束
 # 横向网格数
-cell=10
+cell=4
 # 单个网格长度(以百米为单位)
 celllength=300
 regionnum=cell*cell #区域个数
@@ -44,80 +44,76 @@ EPISODE=4000 #迭代次数
 # 记录损失
 loss=[]
 
-# usernum=20 #用户数为10
+
 #
-# # # 随机数据
-# # （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
-# init_region = list()
-# number=0
-# region0=[0,1,1,0,0,0,0,1,2,0,2,2,1,0,2,1]
-# for i in range(regionnum):
-#     regionn =[0,0,0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
-#     init_region.append(regionn)
-#
-# # 用户需求,T个时间段的用户需求# 定义用户数组（起点横坐标，起点纵坐标，终点横坐标，终点纵坐标，最大步行距离,期望停车区域横坐标，期望停车区域纵坐标）
-# def init_user_demand():
-#     userdemand=[[[0]for i in range (usernum)] for t in range (T)]
-#     for t in range (T):
-#         for i in range (usernum):
-#             # 用户的位置全部用区域表示
-#             userdemand[t][i]=[random.randint(0, cell*celllength),random.randint(0, cell*celllength),(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,cell*celllength*1.4,-1,-1]
-#             # userdemand[t][i]=[(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,cell*celllength*1.4,-1,-1]
-#             # userdemand[t][i]=[random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),random.randint(0,celllength*cell),cell*celllength*1.4,-1,-1]
-#     print("userdemand",userdemand)
-#     return userdemand
-# init_user=init_user_demand()
-#
-# def init_user_region():
-#     number=0
-#     for i in range(len(init_user[0])):
-#         if (init_user[0][i][0] == cell * celllength and init_user[0][i][1] == cell * celllength):
-#             tempa = int(cell * cell - 1)
-#         elif (init_user[0][i][0] == cell * celllength):
-#             tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength) - 1
-#         elif (init_user[0][i][1] == cell * celllength):
-#             tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength) - cell
-#         else:
-#             tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength)
-#         if (tempa < cell * cell):
-#             init_region[tempa][1]+=1
-#     for i in range(regionnum):
-#         number += init_region[i][1]
-#     print("number",number)
-# init_user_region()
-# print("initregion",init_region)
+# # 随机数据
+# （用户数，区域内车辆数,区域内缺车的数量,中心点横坐标，中心点纵坐标），初始化区域时只需初始化当前区域内的车辆数即可，然后根据用户到来信息求得用户数和缺车数
+usernum=30 #用户数为10
+init_region = list()
+number=0
+for i in range(regionnum):
+    regionn =[0,0,0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
+    init_region.append(regionn)
+
+# 用户需求,T个时间段的用户需求# 定义用户数组（起点横坐标，起点纵坐标，终点横坐标，终点纵坐标，最大步行距离,期望停车区域横坐标，期望停车区域纵坐标）
+def init_user_demand():
+    userdemand=[[[0]for i in range (usernum)] for t in range (T)]
+    for t in range (T):
+        for i in range (usernum):
+            # 用户的位置全部用区域表示
+            userdemand[t][i]=[random.randint(0, cell*celllength),random.randint(0, cell*celllength),(random.randint(0, cell - 1) + 1 / 2) * celllength,(random.randint(0, cell - 1) + 1 / 2) * celllength,cell*celllength*1.4,-1,-1]
+    print("userdemand",userdemand)
+    return userdemand
+init_user=init_user_demand()
+
+def init_user_region():
+    number=0
+    for i in range(len(init_user[0])):
+        if (init_user[0][i][0] == cell * celllength and init_user[0][i][1] == cell * celllength):
+            tempa = int(cell * cell - 1)
+        elif (init_user[0][i][0] == cell * celllength):
+            tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength) - 1
+        elif (init_user[0][i][1] == cell * celllength):
+            tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength) - cell
+        else:
+            tempa = int(init_user[0][i][1] / celllength) * cell + int(init_user[0][i][0] / celllength)
+        if (tempa < cell * cell):
+            init_region[tempa][1]+=1
+    for i in range(regionnum):
+        number += init_region[i][1]
+    print("number",number)
+init_user_region()
+print("initregion",init_region)
 
 # 初始化状态，直接根据region来初始化状态
 
-# 真实数据
-init_region = list()
-def init_region2():
-    userregion = []
-    excel = xlrd.open_workbook("../userregion.xlsx")
-    sheet = excel.sheet_by_name("sheet1")
-    userregion=sheet.row_values(0)
-    print("userregion",userregion)
-    for i in range(regionnum):
-        regionn = [0, int(userregion[i]), 0, (i % cell) * celllength + celllength / 2,(int(i / cell)) * celllength + celllength / 2]
-        # regionn =[0,int(userregion[i]*99/539)+1,0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
-        init_region.append(regionn)
-        # print(region)
-init_region2()
-
-
-number=0
-
-for i in range(regionnum):
-      number += init_region[i][1]
-print("initregion",init_region)
-print("number",number)
-
-# 真实需求
-def init_user_demand():
-    # 将excel的数据存于数组中
-    userdemand=getuser().getusers()
-    return userdemand
-init_user = init_user_demand()
+# # 真实数据
+# init_region = list()
+# def init_region2():
+#     userregion = []
+#     excel = xlrd.open_workbook("../userregion.xlsx")
+#     sheet = excel.sheet_by_name("sheet1")
+#     userregion=sheet.row_values(0)
+#     print("userregion",userregion)
+#     for i in range(regionnum):
+#         regionn = [0, int(userregion[i]), 0, (i % cell) * celllength + celllength / 2,(int(i / cell)) * celllength + celllength / 2]
+#         # regionn =[0,int(userregion[i]*99/539)+1,0,(i%cell)*celllength+celllength/2,(int(i/cell))*celllength+celllength/2]
+#         init_region.append(regionn)
+#         # print(region)
+# init_region2()
+# number=0
+#
+# for i in range(regionnum):
+#       number += init_region[i][1]
+# print("initregion",init_region)
+# print("number",number)
+#
+# # 真实需求
+# def init_user_demand():
+#     # 将excel的数据存于数组中
+#     userdemand=getuser().getusers()
+#     return userdemand
+# init_user = init_user_demand()
 
 def init_state():
     #状态应包含这一时间段每个区域的（第二个regionnum）用户数，(第1个regionnum)车的供应数以及下一阶段该区域的缺车数（第三个regionnum）
@@ -133,9 +129,9 @@ def init_state():
 # 从剩余预算中选取一个预算作为当前时段的钱
 sum_loss=[]
 N_ACTIONS = 100
-# 接收的observation维度(区域当前供应，上个阶段每个区域的用户数，上个阶段每个区域到达的用户数，预算约束)
+# 接收的observation维度()
 # 采取的动作是分配的预算，即预算应该只与当前区域的状态，当前用户到来的状态以及下个时间段的缺车有关
-N_STATES = 2*regionnum+1
+N_STATES = 3*regionnum+1
 class Net(nn.Module):
     # 定义卷积层
     def __init__(self, ):
@@ -284,7 +280,7 @@ def run_this():
                 # preregion[i][1]=s[i]
             preuser=copy.deepcopy(user[t])
 
-            # 计算未优化前用户的缺车数（来作为reward的分母）[根据用户的初始还车区域和新用户到来后来计算]
+            #
             # 将这一阶段的用户的还车区域存于一个数组中，用于下一阶段计算reward(直接计算preregion（每个区域的车的数量）)
             # 判断用户的初始骑车区域，同时并更新状态，更新到s_
             for i in range(len(user[t])):
@@ -334,6 +330,7 @@ def run_this():
                         region[tempa][0] += 1
             regionnn = []
             # print("region[0],下个是时间段的用户需求",region)
+            # 将下一时间段的缺车存入状态中
             for i in range(regionnum):
                 region[i][1] = s_[i]
                 if (region[i][0] - region[i][1] > 0):
@@ -410,12 +407,10 @@ def run_this():
             # 执行重平衡任务，来得到用户的还车地点
             # print("len(user[t])",len(user[t]))
             if(len(user[t])!=0 and sumlackbike!=0):
-                kmtest = km(region, user[t], celllength,RB_t*0.01*celllength*celllength,0.1,0.01,cell)
-                tempuser=kmtest.finaluser_greedy()
-                # ulp1 = ulpkm(user=user[t], region=region, pB=1, k=100, B=RB_t, cell=cell, celllength=celllength)
-                # tempuser, tempfit = ulp1.run()
-                # tempuser为各个用户的终点，tempfit为最小d
-                # 判断用户还车的区域来更新状态
+                print("user[t]",user[t])
+                greedytest = greedymatch(region, user[t], celllength,RB_t,0.1,0.01,cell)
+                tempuser=greedytest.build_graph()
+
                 for i in range(len(user[t])):
                     if (tempuser[i][5] == cell * celllength and tempuser[i][6] == cell * celllength):
                         tempb = cell * cell - 1
